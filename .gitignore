@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment & Secrets (Indispensable: Nunca subir API Keys ni secretos)
+.env
+.env.*
+*.key
+*.pem
+secrets.json
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+node_modules/
+dist/

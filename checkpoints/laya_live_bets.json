@@ -1,0 +1,540 @@
+{
+  "bankroll_usd": 1199.41,
+  "active_bet": null,
+  "live_trades_log": [
+    {
+      "bet_id": "LIVE-001",
+      "opened_at": "20:17:55",
+      "closed_at": "20:17:55",
+      "entry_btc": 81341.01,
+      "exit_btc": 81341.01,
+      "target_vol_pct": 0.3358,
+      "realized_vol_pct": 0.3242,
+      "confidence_pct": 54.1,
+      "kelly_pct": 5.0,
+      "stake_usd": 50.0,
+      "outcome": "PERDIDA",
+      "roi_pct": -7.34,
+      "pnl_usd": -3.67,
+      "bankroll_after_usd": 996.33,
+      "trigger": "MANUAL_USUARIO"
+    },
+    {
+      "bet_id": "LIVE-002",
+      "opened_at": "20:17:55",
+      "closed_at": "20:22:57",
+      "entry_btc": 81341.01,
+      "exit_btc": 81446.0,
+      "target_vol_pct": 0.3358,
+      "realized_vol_pct": 0.0156,
+      "confidence_pct": 52.1,
+      "kelly_pct": 5.0,
+      "stake_usd": 49.82,
+      "outcome": "PERDIDA",
+      "roi_pct": -12.39,
+      "pnl_usd": -6.17,
+      "bankroll_after_usd": 990.16,
+      "trigger": "MANUAL_USUARIO"
+    },
+    {
+      "bet_id": "LIVE-003",
+      "opened_at": "20:24:36",
+      "closed_at": "20:29:35",
+      "entry_btc": 81529.99,
+      "exit_btc": 81659.83,
+      "target_vol_pct": 0.0611,
+      "realized_vol_pct": 0.0999,
+      "confidence_pct": 15.3,
+      "kelly_pct": 5.0,
+      "stake_usd": 49.51,
+      "outcome": "GANADA",
+      "roi_pct": 22.89,
+      "pnl_usd": 11.33,
+      "bankroll_after_usd": 1001.49,
+      "trigger": "MANUAL_USUARIO"
+    },
+    {
+      "bet_id": "LIVE-004",
+      "opened_at": "20:29:40",
+      "closed_at": "20:34:40",
+      "entry_btc": 81659.83,
+      "exit_btc": 81816.6,
+      "target_vol_pct": 0.0611,
+      "realized_vol_pct": 0.1685,
+      "confidence_pct": 80.0,
+      "kelly_pct": 8.0,
+      "stake_usd": 81.41,
+      "outcome": "GANADA",
+      "roi_pct": 28.44,
+      "pnl_usd": 23.15,
+      "bankroll_after_usd": 1024.64,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-005",
+      "opened_at": "20:34:40",
+      "closed_at": "20:39:41",
+      "entry_btc": 81816.6,
+      "exit_btc": 81950.73,
+      "target_vol_pct": 0.0619,
+      "realized_vol_pct": 0.0756,
+      "confidence_pct": 98.4,
+      "kelly_pct": 8.0,
+      "stake_usd": 81.41,
+      "outcome": "GANADA",
+      "roi_pct": 18.22,
+      "pnl_usd": 14.83,
+      "bankroll_after_usd": 1039.47,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-006",
+      "opened_at": "20:39:41",
+      "closed_at": "20:39:41",
+      "entry_btc": 81950.73,
+      "exit_btc": 81969.2,
+      "target_vol_pct": 0.0626,
+      "realized_vol_pct": 0.075,
+      "confidence_pct": 99.1,
+      "kelly_pct": 8.0,
+      "stake_usd": 80.43,
+      "outcome": "GANADA",
+      "roi_pct": 17.93,
+      "pnl_usd": 14.42,
+      "bankroll_after_usd": 1053.89,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-007",
+      "opened_at": "20:39:41",
+      "closed_at": "20:39:59",
+      "entry_btc": 81969.2,
+      "exit_btc": 82054.44,
+      "target_vol_pct": 0.0626,
+      "realized_vol_pct": 0.1503,
+      "confidence_pct": 98.5,
+      "kelly_pct": 8.0,
+      "stake_usd": 80.43,
+      "outcome": "GANADA",
+      "roi_pct": 28.43,
+      "pnl_usd": 22.87,
+      "bankroll_after_usd": 1076.76,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-008",
+      "opened_at": "20:39:59",
+      "closed_at": "20:40:17",
+      "entry_btc": 82054.44,
+      "exit_btc": 81888.5,
+      "target_vol_pct": 0.0626,
+      "realized_vol_pct": 0.0894,
+      "confidence_pct": 99.9,
+      "kelly_pct": 8.0,
+      "stake_usd": 80.43,
+      "outcome": "GANADA",
+      "roi_pct": 21.35,
+      "pnl_usd": 17.17,
+      "bankroll_after_usd": 1093.93,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-009",
+      "opened_at": "20:40:17",
+      "closed_at": "20:40:18",
+      "entry_btc": 81888.5,
+      "exit_btc": 81941.19,
+      "target_vol_pct": 0.0626,
+      "realized_vol_pct": 0.0943,
+      "confidence_pct": 100.0,
+      "kelly_pct": 8.0,
+      "stake_usd": 80.43,
+      "outcome": "GANADA",
+      "roi_pct": 22.53,
+      "pnl_usd": 18.12,
+      "bankroll_after_usd": 1112.05,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-010",
+      "opened_at": "20:40:18",
+      "closed_at": "20:44:59",
+      "entry_btc": 81941.19,
+      "exit_btc": 81763.76,
+      "target_vol_pct": 0.0626,
+      "realized_vol_pct": 0.1137,
+      "confidence_pct": 100.0,
+      "kelly_pct": 8.0,
+      "stake_usd": 80.43,
+      "outcome": "GANADA",
+      "roi_pct": 27.18,
+      "pnl_usd": 21.86,
+      "bankroll_after_usd": 1133.91,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-011",
+      "opened_at": "20:44:59",
+      "closed_at": "20:50:01",
+      "entry_btc": 81763.76,
+      "exit_btc": 81892.41,
+      "target_vol_pct": 0.0626,
+      "realized_vol_pct": 0.0556,
+      "confidence_pct": 100.0,
+      "kelly_pct": 8.0,
+      "stake_usd": 79.47,
+      "outcome": "PERDIDA",
+      "roi_pct": -6.69,
+      "pnl_usd": -5.32,
+      "bankroll_after_usd": 1128.59,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-012",
+      "opened_at": "20:50:01",
+      "closed_at": "21:55:35",
+      "entry_btc": 81892.41,
+      "exit_btc": 82032.8,
+      "target_vol_pct": 0.0626,
+      "realized_vol_pct": 0.072,
+      "confidence_pct": 100.0,
+      "kelly_pct": 8.0,
+      "stake_usd": 78.51,
+      "outcome": "GANADA",
+      "roi_pct": 17.16,
+      "pnl_usd": 13.47,
+      "bankroll_after_usd": 1142.06,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-013",
+      "opened_at": "21:57:20",
+      "closed_at": "22:02:21",
+      "entry_btc": 82010.38,
+      "exit_btc": 81883.86,
+      "target_vol_pct": 0.0629,
+      "realized_vol_pct": 0.1114,
+      "confidence_pct": 77.6,
+      "kelly_pct": 8.0,
+      "stake_usd": 78.51,
+      "outcome": "GANADA",
+      "roi_pct": 26.49,
+      "pnl_usd": 20.8,
+      "bankroll_after_usd": 1162.86,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-014",
+      "opened_at": "09:08:47",
+      "closed_at": "09:13:50",
+      "entry_btc": 81578.05,
+      "exit_btc": 81523.51,
+      "target_vol_pct": 0.0752,
+      "realized_vol_pct": 0.0427,
+      "confidence_pct": 99.9,
+      "kelly_pct": 8.0,
+      "stake_usd": 78.51,
+      "outcome": "PERDIDA",
+      "roi_pct": -8.47,
+      "pnl_usd": -6.65,
+      "bankroll_after_usd": 1156.21,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-015",
+      "opened_at": "09:13:50",
+      "closed_at": "09:19:41",
+      "entry_btc": 81523.51,
+      "exit_btc": 81422.23,
+      "target_vol_pct": 0.0764,
+      "realized_vol_pct": 0.1132,
+      "confidence_pct": 100.0,
+      "kelly_pct": 8.0,
+      "stake_usd": 77.57,
+      "outcome": "GANADA",
+      "roi_pct": 22.13,
+      "pnl_usd": 17.17,
+      "bankroll_after_usd": 1173.38,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-016",
+      "opened_at": "09:19:41",
+      "closed_at": "09:24:41",
+      "entry_btc": 81422.23,
+      "exit_btc": 81532.7,
+      "target_vol_pct": 0.0775,
+      "realized_vol_pct": 0.0468,
+      "confidence_pct": 100.0,
+      "kelly_pct": 8.0,
+      "stake_usd": 76.64,
+      "outcome": "PERDIDA",
+      "roi_pct": -8.25,
+      "pnl_usd": -6.32,
+      "bankroll_after_usd": 1167.06,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-017",
+      "opened_at": "09:24:41",
+      "closed_at": "09:29:42",
+      "entry_btc": 81532.7,
+      "exit_btc": 81664.08,
+      "target_vol_pct": 0.0775,
+      "realized_vol_pct": 0.0925,
+      "confidence_pct": 99.2,
+      "kelly_pct": 8.0,
+      "stake_usd": 76.64,
+      "outcome": "GANADA",
+      "roi_pct": 17.82,
+      "pnl_usd": 13.66,
+      "bankroll_after_usd": 1180.72,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-018",
+      "opened_at": "09:29:42",
+      "closed_at": "09:35:41",
+      "entry_btc": 81664.08,
+      "exit_btc": 81572.0,
+      "target_vol_pct": 0.0792,
+      "realized_vol_pct": 0.0679,
+      "confidence_pct": 86.9,
+      "kelly_pct": 8.0,
+      "stake_usd": 75.72,
+      "outcome": "PERDIDA",
+      "roi_pct": -6.87,
+      "pnl_usd": -5.2,
+      "bankroll_after_usd": 1175.52,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-019",
+      "opened_at": "09:35:41",
+      "closed_at": "09:40:41",
+      "entry_btc": 81572.0,
+      "exit_btc": 81513.25,
+      "target_vol_pct": 0.079,
+      "realized_vol_pct": 0.1717,
+      "confidence_pct": 99.8,
+      "kelly_pct": 8.0,
+      "stake_usd": 75.72,
+      "outcome": "GANADA",
+      "roi_pct": 28.43,
+      "pnl_usd": 21.53,
+      "bankroll_after_usd": 1197.05,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-020",
+      "opened_at": "09:40:41",
+      "closed_at": "09:45:41",
+      "entry_btc": 81513.25,
+      "exit_btc": 81486.01,
+      "target_vol_pct": 0.0792,
+      "realized_vol_pct": 0.0827,
+      "confidence_pct": 99.7,
+      "kelly_pct": 8.0,
+      "stake_usd": 75.72,
+      "outcome": "GANADA",
+      "roi_pct": 15.57,
+      "pnl_usd": 11.79,
+      "bankroll_after_usd": 1208.84,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-021",
+      "opened_at": "09:45:41",
+      "closed_at": "09:50:41",
+      "entry_btc": 81486.01,
+      "exit_btc": 81602.37,
+      "target_vol_pct": 0.0792,
+      "realized_vol_pct": 0.1017,
+      "confidence_pct": 99.8,
+      "kelly_pct": 8.0,
+      "stake_usd": 74.81,
+      "outcome": "GANADA",
+      "roi_pct": 19.16,
+      "pnl_usd": 14.33,
+      "bankroll_after_usd": 1223.17,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-022",
+      "opened_at": "09:53:41",
+      "closed_at": "09:58:41",
+      "entry_btc": 81606.01,
+      "exit_btc": 81605.79,
+      "target_vol_pct": 0.0875,
+      "realized_vol_pct": 0.0222,
+      "confidence_pct": 99.9,
+      "kelly_pct": 8.0,
+      "stake_usd": 73.91,
+      "outcome": "PERDIDA",
+      "roi_pct": -10.19,
+      "pnl_usd": -7.53,
+      "bankroll_after_usd": 1215.64,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-023",
+      "opened_at": "09:59:41",
+      "closed_at": "10:04:41",
+      "entry_btc": 81647.77,
+      "exit_btc": 81648.01,
+      "target_vol_pct": 0.0875,
+      "realized_vol_pct": 0.0754,
+      "confidence_pct": 74.1,
+      "kelly_pct": 8.0,
+      "stake_usd": 73.03,
+      "outcome": "PERDIDA",
+      "roi_pct": -6.79,
+      "pnl_usd": -4.96,
+      "bankroll_after_usd": 1210.68,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-024",
+      "opened_at": "10:04:41",
+      "closed_at": "10:09:41",
+      "entry_btc": 81648.01,
+      "exit_btc": 81722.09,
+      "target_vol_pct": 0.0894,
+      "realized_vol_pct": 0.0485,
+      "confidence_pct": 99.9,
+      "kelly_pct": 8.0,
+      "stake_usd": 72.15,
+      "outcome": "PERDIDA",
+      "roi_pct": -8.62,
+      "pnl_usd": -6.22,
+      "bankroll_after_usd": 1204.46,
+      "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-025",
+      "opened_at": "10:09:41",
+      "closed_at": "13:12:01",
+      "entry_btc": 81722.09,
+      "exit_btc": 63844.6,
+      "target_vol_pct": 0.0894,
+      "realized_vol_pct": 0.0731,
+      "confidence_pct": 99.8,
+      "kelly_pct": 8.0,
+      "stake_usd": 71.31,
+      "outcome": "PERDIDA",
+      "roi_pct": -7.08,
+      "pnl_usd": -5.05,
+      "bankroll_after_usd": 1199.41,
+      "trigger": "AUTO_AGENTES_RL"
+    }
+  ],
+  "equity_history": [
+    {
+      "time": "20:17:55",
+      "bankroll": 1000.0
+    },
+    {
+      "time": "20:17:55",
+      "bankroll": 996.33
+    },
+    {
+      "time": "20:22:57",
+      "bankroll": 990.16
+    },
+    {
+      "time": "20:29:35",
+      "bankroll": 1001.49
+    },
+    {
+      "time": "20:34:40",
+      "bankroll": 1024.64
+    },
+    {
+      "time": "20:39:41",
+      "bankroll": 1039.47
+    },
+    {
+      "time": "20:39:41",
+      "bankroll": 1053.89
+    },
+    {
+      "time": "20:39:59",
+      "bankroll": 1076.76
+    },
+    {
+      "time": "20:40:17",
+      "bankroll": 1093.93
+    },
+    {
+      "time": "20:40:18",
+      "bankroll": 1112.05
+    },
+    {
+      "time": "20:44:59",
+      "bankroll": 1133.91
+    },
+    {
+      "time": "20:50:01",
+      "bankroll": 1128.59
+    },
+    {
+      "time": "21:55:35",
+      "bankroll": 1142.06
+    },
+    {
+      "time": "22:02:21",
+      "bankroll": 1162.86
+    },
+    {
+      "time": "09:13:50",
+      "bankroll": 1156.21
+    },
+    {
+      "time": "09:19:41",
+      "bankroll": 1173.38
+    },
+    {
+      "time": "09:24:41",
+      "bankroll": 1167.06
+    },
+    {
+      "time": "09:29:42",
+      "bankroll": 1180.72
+    },
+    {
+      "time": "09:35:41",
+      "bankroll": 1175.52
+    },
+    {
+      "time": "09:40:41",
+      "bankroll": 1197.05
+    },
+    {
+      "time": "09:45:41",
+      "bankroll": 1208.84
+    },
+    {
+      "time": "09:50:41",
+      "bankroll": 1223.17
+    },
+    {
+      "time": "09:58:41",
+      "bankroll": 1215.64
+    },
+    {
+      "time": "10:04:41",
+      "bankroll": 1210.68
+    },
+    {
+      "time": "10:09:41",
+      "bankroll": 1204.46
+    },
+    {
+      "time": "13:12:01",
+      "bankroll": 1199.41
+    }
+  ],
+  "wins": 15,
+  "losses": 10,
+  "bet_counter": 25
+}
