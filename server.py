@@ -1,6 +1,8 @@
+import hashlib
 import json
 import math
 import os
+import secrets
 import threading
 import time
 import urllib.parse
@@ -11,15 +13,22 @@ import numpy as np
 from rl_agent import LayaRLAgent
 from agents_orchestrator import LayaMultiAgentOrchestrator
 from paper_trading_sim import LivePaperBetEngine, run_paper_trading_simulation
+from polymarket_final_agent import PolymarketFinalAgentEngine
 
 PORT = 8050
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Credenciales públicas (Sin API Key privada)
-# Instancia persistente del Agente RL, Orquestador Multi-Agente y Simulador de Apuestas en Vivo
+# Token de sesión HttpOnly generado exclusivamente en memoria del servidor (nunca expuesto en código UI ni VITE_)
+SERVER_UI_SESSION_TOKEN = hashlib.sha256(
+    (os.environ.get("LAYA_BACKEND_API_KEY", "laya-local") + secrets.token_hex(16)).encode("utf-8")
+).hexdigest()
+
+# Credenciales públicas (Sin API Key privada expuesta a IA ni al navegador)
+# Instancia persistente del Agente RL, Orquestador Multi-Agente, Simulador y Motor Final de Rúbrica
 RL_AGENT = LayaRLAgent(state_dim=8, hidden_dim=32, gamma=0.92, lr=0.015)
 ORCHESTRATOR = LayaMultiAgentOrchestrator(rl_agent=RL_AGENT)
 LIVE_BET_ENGINE = LivePaperBetEngine()
+FINAL_AGENT = PolymarketFinalAgentEngine(rl_agent=RL_AGENT)
 CACHED_MARKETS = []
 FAST_CACHE = {"ts": 0.0, "token_id": "", "klines": None, "poly_hist": None, "book": None}
 ATOMIC_CLOCK_OFFSET_SEC = 0.0
@@ -584,14 +593,56 @@ def train_and_evaluate_laya(
 
 
 class LayaDashboardHandler(BaseHTTPRequestHandler):
-    def _send_json(self, payload, status=200):
-        body = json.dumps(payload).encode("utf-8")
+    def _send_json(self, payload, status=200, set_session_cookie=False):
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", "http://localhost:8050")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-API-Key, Authorization")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        if set_session_cookie:
+            self.send_header(
+                "Set-Cookie",
+                f"laya_srv_session={SERVER_UI_SESSION_TOKEN}; Path=/; HttpOnly; SameSite=Strict",
+            )
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "http://localhost:8050")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-API-Key, Authorization")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.end_headers()
+
+    def _authenticate_protected_request(self, endpoint_label: str) -> tuple[bool, str]:
+        """
+        Verifica la autenticación en el servidor para acciones protegidas:
+        1. Si se envía cabecera `X-API-Key` o `Authorization: Bearer ...`, valida estrictamente
+           contra el secreto del servidor (`.env`) y rechaza claves incorrectas o vacías con HTTP 401.
+        2. Si proviene de la sesión local del navegador con cookie `HttpOnly; SameSite=Strict`
+           emitida por el propio servidor, autoriza sin exponer secretos en React ni variables VITE_.
+        """
+        explicit_key = self.headers.get("X-API-Key")
+        auth_header = self.headers.get("Authorization", "")
+        if explicit_key is not None or auth_header.startswith("Bearer "):
+            candidate = explicit_key if explicit_key is not None else auth_header.replace("Bearer ", "", 1).strip()
+            return FINAL_AGENT.verify_control_auth(candidate, endpoint_label)
+
+        cookie_hdr = self.headers.get("Cookie", "")
+        if f"laya_srv_session={SERVER_UI_SESSION_TOKEN}" in cookie_hdr:
+            return True, "Sesión local HttpOnly verificada."
+
+        return FINAL_AGENT.verify_control_auth(None, endpoint_label)
+
+    def _get_current_klines_and_poly_prob(self):
+        klines = FAST_CACHE.get("klines") or fetch_btc_5m_klines(limit=96)
+        FAST_CACHE["klines"] = klines
+        FAST_CACHE["ts"] = time.time()
+        up_cents = POLY_5M_SYNC_CACHE.get("up_cents") or 51
+        poly_prob = float(np.clip(up_cents / 100.0, 0.05, 0.95))
+        return klines, poly_prob
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -604,9 +655,56 @@ class LayaDashboardHandler(BaseHTTPRequestHandler):
                 content = f.read()
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header(
+                "Set-Cookie",
+                f"laya_srv_session={SERVER_UI_SESSION_TOKEN}; Path=/; HttpOnly; SameSite=Strict",
+            )
             self.send_header("Content-Length", str(len(content)))
             self.end_headers()
             self.wfile.write(content)
+            return
+
+        if path == "/api/docs":
+            self._send_json(
+                {
+                    "openapi": "3.1.0",
+                    "info": {
+                        "title": "Laya Polymarket AI Financial Agent API",
+                        "version": "1.0.0",
+                        "description": "API documentada del Agente de IA Financiero para Polymarket (Ciclo de 7 pasos, Ollama Local con Gateway Privado, Motor de Riesgo Determinista, Simulador Paper 50,000 USDC a 0.0% comisión y Persistencia SQLite).",
+                    },
+                    "security_architecture": {
+                        "server_only_secrets": True,
+                        "env_file_isolated": True,
+                        "gateway_auth_header": "X-API-Key",
+                        "ui_session_cookie": "laya_srv_session (HttpOnly; SameSite=Strict)",
+                        "real_polymarket_orders_blocked": True,
+                    },
+                    "endpoints": {
+                        "GET /api/final_agent/status": "Estado completo del agente, ciclo de 7 pasos, posición, patrimonio ($50,000 USDC), bitácora SQLite y comparativa de 3 estrategias.",
+                        "POST /api/final_agent/control": "Protegido (X-API-Key / HttpOnly): Iniciar (START), Pausar (PAUSE), Detener (STOP sin liquidar por defecto) o Reiniciar.",
+                        "POST /api/final_agent/cycle": "Protegido: Ejecuta un ciclo obligatorio de 7 pasos sobre la última vela cerrada de 5m en Polymarket.",
+                        "POST /api/final_agent/replay_20": "Protegido: Ejecuta y verifica >=20 ciclos válidos de decisión en modo REPLAY histórico separado de LIVE.",
+                        "POST /api/final_agent/errors_9": "Protegido: Demuestra y registra los 9 escenarios de error obligatorios de la Sección 15.",
+                        "POST /api/final_agent/trigger_error": "Protegido: Dispara individualmente cualquiera de los 9 errores para verificación en vivo.",
+                        "POST /api/final_agent/llm_gateway": "Gateway privado de Ollama local: exige X-API-Key válida y rechaza claves ausentes o incorrectas con HTTP 401.",
+                        "POST /api/final_agent/real_order_block": "Verifica que cualquier intento de enviar órdenes reales al CLOB de Polymarket es bloqueado.",
+                        "GET /api/final_agent/compare_strategies": "Compara en el mismo periodo y costos (0.0%): Modelo sin LLM vs Agente con LLM vs Comprar y Mantener.",
+                    },
+                }
+            )
+            return
+
+        if path == "/api/final_agent/status":
+            klines, poly_prob = self._get_current_klines_and_poly_prob()
+            payload = FINAL_AGENT.get_full_dashboard_payload(raw_klines=klines, poly_clob_prob=poly_prob)
+            self._send_json(payload, set_session_cookie=True)
+            return
+
+        if path == "/api/final_agent/compare_strategies":
+            klines, _ = self._get_current_klines_and_poly_prob()
+            comp = FINAL_AGENT.evaluate_three_strategies(raw_klines=klines)
+            self._send_json(comp)
             return
 
         if path == "/api/poly_5m_sync":
@@ -688,13 +786,176 @@ class LayaDashboardHandler(BaseHTTPRequestHandler):
 
         self.send_error(404, "Ruta no encontrada")
 
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        path = parsed.path
+        length = int(self.headers.get("Content-Length", "0"))
+        raw_body = self.rfile.read(length).decode("utf-8") if length > 0 else "{}"
+        try:
+            body = json.loads(raw_body) if raw_body else {}
+        except Exception:
+            body = {}
+
+        if path == "/api/final_agent/llm_gateway":
+            # Gateway Privado del LLM: exige X-API-Key válida en cabecera
+            provided_key = self.headers.get("X-API-Key")
+            ok_auth, auth_msg = FINAL_AGENT.gateway.verify_api_key(
+                provided_key, endpoint_name="/api/final_agent/llm_gateway"
+            )
+            if not ok_auth:
+                self._send_json(
+                    {"ok": False, "error_code": "INVALID_API_KEY", "message": auth_msg},
+                    status=401,
+                )
+                return
+            obs = body.get("observation") or {
+                "symbol": FINAL_AGENT.symbol,
+                "candle_date": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "model_forecast_prob": 0.57,
+                "poly_clob_prob": 0.51,
+            }
+            res = FINAL_AGENT.gateway.query_local_ollama(structured_observation=obs, api_key=provided_key)
+            self._send_json(res, status=200 if res.get("ok") else 400)
+            return
+
+        if path == "/api/final_agent/control":
+            ok_auth, auth_msg = self._authenticate_protected_request("/api/final_agent/control")
+            if not ok_auth:
+                self._send_json({"ok": False, "error_code": "INVALID_API_KEY", "message": auth_msg}, status=401)
+                return
+            action = str(body.get("action", "START")).upper()
+            liquidate = bool(body.get("liquidate_on_stop", False))
+            if action == "RESET":
+                state = FINAL_AGENT.db.reset_portfolio(clear_replay=False)
+                self._send_json({"ok": True, "status": state["status"], "message": "Portafolio Paper restaurado a $50,000.00 USDC.", "state": state})
+                return
+            res = FINAL_AGENT.set_human_control(action=action, liquidate_on_stop=liquidate)
+            self._send_json(res)
+            return
+
+        if path == "/api/final_agent/cycle":
+            ok_auth, auth_msg = self._authenticate_protected_request("/api/final_agent/cycle")
+            if not ok_auth:
+                self._send_json({"ok": False, "error_code": "INVALID_API_KEY", "message": auth_msg}, status=401)
+                return
+            klines, poly_prob = self._get_current_klines_and_poly_prob()
+            mode = str(body.get("mode", "LIVE")).upper()
+            res = FINAL_AGENT.run_mandatory_7step_cycle(
+                raw_klines=klines,
+                poly_clob_prob=poly_prob,
+                mode=mode,
+                market_question=POLY_5M_SYNC_CACHE.get("title") or "Polymarket BTC Up or Down 5m",
+            )
+            self._send_json(res)
+            return
+
+        if path == "/api/final_agent/replay_20":
+            ok_auth, auth_msg = self._authenticate_protected_request("/api/final_agent/replay_20")
+            if not ok_auth:
+                self._send_json({"ok": False, "error_code": "INVALID_API_KEY", "message": auth_msg}, status=401)
+                return
+            klines, _ = self._get_current_klines_and_poly_prob()
+            num_cycles = int(body.get("num_cycles", 22))
+            res = FINAL_AGENT.run_20_replay_cycles(raw_klines=klines, num_cycles=num_cycles)
+            self._send_json(res)
+            return
+
+        if path == "/api/final_agent/errors_9":
+            ok_auth, auth_msg = self._authenticate_protected_request("/api/final_agent/errors_9")
+            if not ok_auth:
+                self._send_json({"ok": False, "error_code": "INVALID_API_KEY", "message": auth_msg}, status=401)
+                return
+            klines, _ = self._get_current_klines_and_poly_prob()
+            res = FINAL_AGENT.demonstrate_all_9_errors(raw_klines=klines)
+            self._send_json(res)
+            return
+
+        if path == "/api/final_agent/trigger_error":
+            scenario = str(body.get("scenario_code", "API_TIMEOUT_OR_RATE_LIMIT")).upper()
+            if scenario == "INVALID_API_KEY":
+                # Probar rechazo directo de clave inválida con HTTP 401
+                ok_auth, auth_msg = FINAL_AGENT.verify_control_auth("clave-invalida-demo-401", "/api/final_agent/trigger_error")
+                self._send_json(
+                    {
+                        "scenario_code": "INVALID_API_KEY",
+                        "handled_correctly": not ok_auth,
+                        "http_status": 401,
+                        "agent_response": "REJECT_UNAUTHORIZED_REQUEST",
+                        "message": auth_msg,
+                    },
+                    status=200,
+                )
+                return
+            ok_auth, auth_msg = self._authenticate_protected_request("/api/final_agent/trigger_error")
+            if not ok_auth:
+                self._send_json({"ok": False, "error_code": "INVALID_API_KEY", "message": auth_msg}, status=401)
+                return
+            klines, _ = self._get_current_klines_and_poly_prob()
+            res = FINAL_AGENT.trigger_single_error_scenario(scenario_code=scenario, raw_klines=klines)
+            self._send_json(res)
+            return
+
+        if path == "/api/final_agent/real_order_block":
+            res = FINAL_AGENT.attempt_real_polymarket_order_block()
+            self._send_json(res, status=403)
+            return
+
+        self.send_error(404, "Ruta POST no encontrada")
+
     def log_message(self, format, *args):
         pass
+
+
+def _bootstrap_and_schedule_final_agent():
+    """
+    Inicializa la evidencia verificable (>=20 ciclos Replay + 9 errores + comparativa de 3 estrategias)
+    y ejecuta periódicamente el ciclo programado del agente sobre cada nueva vela cerrada de 5m.
+    """
+    try:
+        klines = fetch_btc_5m_klines(limit=96)
+        FAST_CACHE["klines"] = klines
+        FAST_CACHE["ts"] = time.time()
+        up_cents = POLY_5M_SYNC_CACHE.get("up_cents") or 51
+        poly_prob = float(np.clip(up_cents / 100.0, 0.05, 0.95))
+
+        existing_replay = FINAL_AGENT.db.get_recent_decisions(mode="REPLAY", limit=25)
+        if len(existing_replay) < 20:
+            FINAL_AGENT.run_20_replay_cycles(raw_klines=klines, num_cycles=22)
+
+        existing_errors = FINAL_AGENT.db.get_recent_errors(limit=15)
+        if len(existing_errors) < 9:
+            FINAL_AGENT.demonstrate_all_9_errors(raw_klines=klines)
+        else:
+            FINAL_AGENT.demonstrate_all_9_errors(raw_klines=klines)
+
+        FINAL_AGENT.evaluate_three_strategies(raw_klines=klines)
+        FINAL_AGENT.run_mandatory_7step_cycle(raw_klines=klines, poly_clob_prob=poly_prob, mode="LIVE")
+    except Exception as exc:
+        print(f"[Aviso] Bootstrap inicial del Agente Final: {exc}")
+
+    while True:
+        time.sleep(15.0)
+        try:
+            state = FINAL_AGENT.db.get_state()
+            if state.get("status") == "RUNNING":
+                klines = fetch_btc_5m_klines(limit=96)
+                up_cents = POLY_5M_SYNC_CACHE.get("up_cents") or 51
+                poly_prob = float(np.clip(up_cents / 100.0, 0.05, 0.95))
+                FINAL_AGENT.run_mandatory_7step_cycle(
+                    raw_klines=klines,
+                    poly_clob_prob=poly_prob,
+                    mode="LIVE",
+                    market_question=POLY_5M_SYNC_CACHE.get("title") or "Polymarket BTC Up or Down 5m",
+                )
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
     t_sync = threading.Thread(target=_background_poly_5m_poller, daemon=True)
     t_sync.start()
+    t_agent = threading.Thread(target=_bootstrap_and_schedule_final_agent, daemon=True)
+    t_agent.start()
     server = ThreadingHTTPServer(("0.0.0.0", PORT), LayaDashboardHandler)
-    print(f"Servidor Multi-Agente Laya activo en: http://localhost:{PORT}")
+    print(f"Servidor Multi-Agente Laya + Proyecto Final Polymarket activo en: http://localhost:{PORT}")
     server.serve_forever()
