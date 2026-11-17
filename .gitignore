@@ -6,6 +6,7 @@ __pycache__/
 # Environment & Secrets (Indispensable: Nunca subir API Keys ni secretos)
 .env
 .env.*
+!.env.example
 *.key
 *.pem
 secrets.json
@@ -17,3 +18,6 @@ Thumbs.db
 .idea/
 node_modules/
 dist/
+
+# Runtime SQLite database & WAL files
+data/*.db*

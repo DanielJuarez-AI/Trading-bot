@@ -1,0 +1,76 @@
+{
+  "model_name": "LayaRLActorCriticCalibrated",
+  "model_version": "1.0.0",
+  "scaler_version": "1.0.0",
+  "weights_file": "checkpoints/laya_rl_weights.npz",
+  "scaler_file": "checkpoints/laya_scaler_v1.json",
+  "target_asset": "POLY-BTC-5M",
+  "candle_interval": "5m",
+  "requires_closed_candle": true,
+  "input_dimension": 8,
+  "hidden_dimension": 32,
+  "activation": "GELU + Platt Temperature Scaling",
+  "variables_contract": [
+    {
+      "index": 0,
+      "name": "parkinson_vol_5m",
+      "formula": "sqrt((1 / (4 * ln(2))) * ln(High_t / Low_t)^2)",
+      "unit": "ratio",
+      "valid_range": [0.0, 0.25]
+    },
+    {
+      "index": 1,
+      "name": "garman_klass_vol_5m",
+      "formula": "sqrt(max(0, 0.5 * ln(H_t/L_t)^2 - (2*ln(2)-1) * ln(C_t/O_t)^2))",
+      "unit": "ratio",
+      "valid_range": [0.0, 0.25]
+    },
+    {
+      "index": 2,
+      "name": "realized_vol_5m",
+      "formula": "std(log_return_{t-5:t})",
+      "unit": "ratio",
+      "valid_range": [0.0, 0.25]
+    },
+    {
+      "index": 3,
+      "name": "log_return_5m",
+      "formula": "ln(Close_t / Close_{t-1})",
+      "unit": "log_return",
+      "valid_range": [-0.20, 0.20]
+    },
+    {
+      "index": 4,
+      "name": "volume_zscore_5m",
+      "formula": "(Volume_t - mean(Volume)) / (std(Volume) + 1e-8)",
+      "unit": "zscore",
+      "valid_range": [-5.0, 10.0]
+    },
+    {
+      "index": 5,
+      "name": "taker_buy_ratio_5m",
+      "formula": "TakerBuyVolume_t / (TotalVolume_t + 1e-8)",
+      "unit": "probability",
+      "valid_range": [0.0, 1.0]
+    },
+    {
+      "index": 6,
+      "name": "polymarket_clob_mid",
+      "formula": "(BestBid_CLOB + BestAsk_CLOB) / 2.0",
+      "unit": "probability",
+      "valid_range": [0.01, 0.99]
+    },
+    {
+      "index": 7,
+      "name": "polymarket_momentum_5m",
+      "formula": "polymarket_clob_mid_t - polymarket_clob_mid_{t-1}",
+      "unit": "probability_delta",
+      "valid_range": [-0.98, 0.98]
+    }
+  ],
+  "outputs_contract": {
+    "forecast_prob_up": "float in [0.01, 0.99] calibrated via Platt temperature T",
+    "forecast_btc_price_usd": "float > 0",
+    "model_signal": "BUY | HOLD | SELL based on optimal_threshold and edge vs Polymarket CLOB"
+  }
+}

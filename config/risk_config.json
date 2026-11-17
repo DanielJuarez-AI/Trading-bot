@@ -1,0 +1,35 @@
+{
+  "version": "1.0.0",
+  "market_venue": "Polymarket CLOB (Modo Paper 100% Simulado)",
+  "allowed_symbols": ["POLY-BTC-5M", "BTC-UPDOWN-5M"],
+  "candle_frequency": "5m",
+  "require_closed_candle": true,
+  "initial_capital_usdc": 50000.0,
+  "quote_currency": "USDC",
+  "fee_rate_pct": 0.0,
+  "slippage_assumption_bps": 15.0,
+  "slippage_documentation": "Supuesto de deslizamiento determinista de 15 bps (0.15% o 0.0015 en probabilidad de share de Polymarket CLOB) aplicado al cruzar el spread Best Ask/Bid.",
+  "allow_leverage": false,
+  "max_leverage": 1.0,
+  "allow_short_selling": false,
+  "max_exposure_pct": 20.0,
+  "max_exposure_usdc": 10000.0,
+  "default_order_size_usdc": 2500.0,
+  "min_order_usdc": 10.0,
+  "min_shares": 1.0,
+  "price_tick_precision": 4,
+  "share_lot_precision": 2,
+  "max_daily_loss_pct": 5.0,
+  "max_daily_loss_usdc": 2500.0,
+  "max_data_age_sec": 360,
+  "stop_behavior": {
+    "stop_liquidates_position": false,
+    "default_stop_action": "HOLD_AND_BLOCK_NEW_ORDERS",
+    "description": "Al pulsar Detener o alcanzar un límite de riesgo, se bloquean nuevas órdenes y se conserva/muestra explícitamente la posición abierta. No se asume que detener equivale a liquidar."
+  },
+  "security_controls": {
+    "allow_real_polymarket_orders": false,
+    "llm_can_modify_risk_limits": false,
+    "require_api_key_for_mutations": true
+  }
+}

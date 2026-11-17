@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "provider": "Ollama Local (Private Gateway Authenticated)",
+  "ollama_host": "http://127.0.0.1:11434",
+  "model_name": "qwen2.5-polymarket-quant:3b-local",
+  "model_version": "0.5.7-q4_K_M-local",
+  "cloud_inference_allowed": false,
+  "gateway_auth_required": true,
+  "gateway_auth_header": "X-API-Key",
+  "retry_policy": {
+    "max_retries": 3,
+    "backoff_seconds": [0.2, 0.4, 0.8],
+    "on_exhaustion_action": "PAUSE_AGENT_AND_LOG_ERROR"
+  },
+  "allowed_actions": ["BUY", "HOLD", "SELL"],
+  "allowed_symbols": ["POLY-BTC-5M"],
+  "output_json_contract": {
+    "required_fields": ["action", "symbol", "candle_date", "justification"],
+    "field_types": {
+      "action": "string (enum: BUY | HOLD | SELL)",
+      "symbol": "string (must match POLY-BTC-5M)",
+      "candle_date": "string (ISO-8601 UTC closed candle timestamp)",
+      "justification": "string (10 to 280 chars grounded in Polymarket & model data)"
+    }
+  },
+  "tools_permissions": [
+    {
+      "name": "get_polymarket_closed_candle",
+      "permission": "READ_ONLY",
+      "can_access_secrets": false,
+      "can_place_orders": false,
+      "description": "Lee la última vela cerrada de 5m y las probabilidades implícitas Up/Down del CLOB de Polymarket."
+    },
+    {
+      "name": "get_laya_model_forecast",
+      "permission": "READ_ONLY",
+      "can_access_secrets": false,
+      "can_place_orders": false,
+      "description": "Consulta el pronóstico calibrado del modelo predictivo Laya v1.0.0 y las 8 variables estandarizadas."
+    },
+    {
+      "name": "get_paper_portfolio_and_risk_state",
+      "permission": "READ_ONLY",
+      "can_access_secrets": false,
+      "can_modify_risk_limits": false,
+      "description": "Lee saldo en USDC, posición actual en shares de Polymarket, exposición (%) y límites de riesgo."
+    }
+  ],
+  "prompt_injection_protection": {
+    "treat_external_market_text_as_untrusted_data": true,
+    "strip_control_tokens": true,
+    "never_expose_env_or_keys_to_llm": true
+  }
+}

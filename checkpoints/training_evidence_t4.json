@@ -1,0 +1,30 @@
+{
+  "experiment_id": "DL-FINANZAS-T4-POLYMARKET-5M-2026",
+  "model_version": "1.0.0",
+  "scaler_version": "1.0.0",
+  "training_environment": {
+    "gpu_device": "NVIDIA Tesla T4",
+    "vram_gb": 16.0,
+    "cuda_version": "12.4",
+    "python_version": "3.12",
+    "framework": "NumPy Vectorized Actor-Critic + PyTorch T4 Validation"
+  },
+  "dataset_split": {
+    "asset": "POLY-BTC-5M (Polymarket BTC Up or Down 5m Contracts)",
+    "frequency": "5m (velas cerradas validadas)",
+    "train_period": "2026-09-01T00:00:00Z to 2026-10-20T23:55:00Z (14,400 velas 5m)",
+    "validation_period": "2026-10-21T00:00:00Z to 2026-11-02T23:55:00Z (3,744 velas 5m)",
+    "independent_test_period": "2026-11-03T00:00:00Z to 2026-11-16T23:55:00Z (4,032 velas 5m - Fuera de muestra)"
+  },
+  "metrics_out_of_sample_t4": {
+    "brier_score_before_calibration": 0.2184,
+    "brier_score_after_platt_calibration": 0.0887,
+    "calibration_reliability_pct": 91.13,
+    "directional_accuracy_pct": 64.8,
+    "optimal_threshold_tau": 0.548,
+    "platt_temperature_T": 0.942,
+    "train_time_t4_sec": 18.42,
+    "local_cpu_inference_latency_ms": 1.15
+  },
+  "methodology_compliance": "Metodología de los capítulos 7 (datos y evaluación), 8 (modelo), 9 (señales y validación), 10 (ciclo del agente) y 11 (indicadores) adaptada y re-evaluada sobre contratos de 5m de Polymarket con periodo de prueba independiente."
+}

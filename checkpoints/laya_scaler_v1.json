@@ -1,0 +1,38 @@
+{
+  "scaler_name": "LayaPolymarketStandardScaler",
+  "version": "1.0.0",
+  "trained_on_asset": "POLY-BTC-5M (Polymarket BTC Up or Down 5m + CLOB Orderbook)",
+  "feature_order": [
+    "parkinson_vol_5m",
+    "garman_klass_vol_5m",
+    "realized_vol_5m",
+    "log_return_5m",
+    "volume_zscore_5m",
+    "taker_buy_ratio_5m",
+    "polymarket_clob_mid",
+    "polymarket_momentum_5m"
+  ],
+  "mean": [
+    0.001428,
+    0.001385,
+    0.001294,
+    0.000042,
+    0.0,
+    0.5042,
+    0.5015,
+    0.00085
+  ],
+  "std": [
+    0.000812,
+    0.000795,
+    0.000741,
+    0.00165,
+    1.0,
+    0.0985,
+    0.142,
+    0.0245
+  ],
+  "clip_zscore_bounds": [-5.0, 5.0],
+  "created_at": "2026-11-15T18:30:00Z",
+  "training_hardware": "NVIDIA Tesla T4 (16GB VRAM) - Google Colab / Entorno Práctica Capítulos 7-11"
+}

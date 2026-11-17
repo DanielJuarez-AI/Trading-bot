@@ -1,5 +1,5 @@
 {
-  "bankroll_usd": 1199.41,
+  "bankroll_usd": 1193.61,
   "active_bet": null,
   "live_trades_log": [
     {
@@ -426,6 +426,23 @@
       "pnl_usd": -5.05,
       "bankroll_after_usd": 1199.41,
       "trigger": "AUTO_AGENTES_RL"
+    },
+    {
+      "bet_id": "LIVE-026",
+      "opened_at": "14:38:12",
+      "closed_at": "14:43:14",
+      "entry_btc": 64040.36,
+      "exit_btc": 64021.04,
+      "target_vol_pct": 0.1608,
+      "realized_vol_pct": 0.0984,
+      "confidence_pct": 98.5,
+      "kelly_pct": 8.0,
+      "stake_usd": 70.45,
+      "outcome": "PERDIDA",
+      "roi_pct": -8.23,
+      "pnl_usd": -5.8,
+      "bankroll_after_usd": 1193.61,
+      "trigger": "AUTO_AGENTES_RL"
     }
   ],
   "equity_history": [
@@ -532,9 +549,13 @@
     {
       "time": "13:12:01",
       "bankroll": 1199.41
+    },
+    {
+      "time": "14:43:14",
+      "bankroll": 1193.61
     }
   ],
   "wins": 15,
-  "losses": 10,
-  "bet_counter": 25
+  "losses": 11,
+  "bet_counter": 26
 }
