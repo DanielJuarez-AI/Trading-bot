@@ -637,7 +637,8 @@
       <div class="control-group">
         <label for="oracleSelect">Fuente Precio Real (Oráculo 1ms)</label>
         <select id="oracleSelect">
-          <option value="polymarket_rtds" selected>Polymarket RTDS Oficial (Chainlink BTC/USD + API Key 1ms)</option>
+          <option value="polymarket_rtds" selected>Polymarket RTDS Oficial (Chainlink BTC/USD 1ms)</option>
+          <option value="mexc">MEXC Exchange (BTC_USDT Spot/Futures 1ms)</option>
           <option value="coinbase">Coinbase BTC-USD (Spot Directo)</option>
           <option value="binance">Binance BTC-USDT (BookTicker 1ms)</option>
         </select>
@@ -1284,7 +1285,29 @@
         };
       } catch (_) {}
 
-      // D) Binance BookTicker WebSocket (Frecuencia de actualización ~1ms en cada cambio del mejor Bid/Ask)
+      // D) MEXC Exchange WebSocket Oficial (BTCUSDT Spot/Futures BookTicker)
+      try {
+        const mexcWs = new WebSocket('wss://wbs.mexc.com/ws');
+        mexcWs.onopen = () => {
+          mexcWs.send(JSON.stringify({
+            method: 'SUBSCRIPTION',
+            params: ['spot@public.bookTicker.v3.api@BTCUSDT']
+          }));
+        };
+        mexcWs.onmessage = (ev) => {
+          try {
+            const msg = JSON.parse(ev.data);
+            if (msg.d && msg.d.b && msg.d.a) {
+              const mexcMid = (parseFloat(msg.d.b) + parseFloat(msg.d.a)) * 0.5;
+              if (!isNaN(mexcMid) && mexcMid > 1000 && currentOracle === 'mexc') {
+                onNewRealtimeTick(mexcMid, 'MEXC-1MS');
+              }
+            }
+          } catch (_) {}
+        };
+      } catch (_) {}
+
+      // E) Binance BookTicker WebSocket (Frecuencia de actualización ~1ms en cada cambio del mejor Bid/Ask)
       try {
         binanceBookWs = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@bookTicker');
         binanceBookWs.onmessage = (ev) => {
@@ -1292,8 +1315,8 @@
           if (msg.b && msg.a) {
             const mid = (parseFloat(msg.b) + parseFloat(msg.a)) * 0.5;
             lastBinanceBookMid = mid;
-            if (currentOracle === 'binance') {
-              onNewRealtimeTick(mid, 'BINANCE-1MS');
+            if (currentOracle === 'binance' || currentOracle === 'mexc') {
+              onNewRealtimeTick(mid, currentOracle === 'mexc' ? 'MEXC-1MS' : 'BINANCE-1MS');
             } else if (currentOracle === 'polymarket_rtds') {
               // Interpolación de micro-ticks a 1ms anclada exactamente al oráculo Chainlink de Polymarket
               onNewRealtimeTick(mid + chainlinkBasisOffset, 'POLY-1MS');
