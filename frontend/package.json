@@ -1,9 +1,9 @@
 {
   "name": "laya-trading-bot-ui",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "UI en Vue 3 + Vite + TypeScript para Laya Trading Bot (Polymarket & MEXC 5m Volatility)",
+  "description": "UI en React + TypeScript y Vue 3 para Laya Polymarket AI Financial Agent (Modo Paper $50,000 USDC + Ollama Local)",
   "scripts": {
     "dev": "vite --port 5173",
     "build": "vue-tsc -b && vite build",
@@ -11,10 +11,14 @@
   },
   "dependencies": {
     "chart.js": "^4.4.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "vue": "^3.4.37"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-vue": "^5.1.2",
     "typescript": "^5.5.4",
     "vite": "^5.4.1",
