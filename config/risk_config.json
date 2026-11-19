@@ -22,6 +22,10 @@
   "max_daily_loss_pct": 5.0,
   "max_daily_loss_usdc": 2500.0,
   "max_data_age_sec": 360,
+  "min_model_confidence_pct": 85.0,
+  "min_risk_confidence_pct": 85.0,
+  "window_duration_sec": 300,
+  "last_minute_lockout_sec": 60,
   "stop_behavior": {
     "stop_liquidates_position": false,
     "default_stop_action": "HOLD_AND_BLOCK_NEW_ORDERS",

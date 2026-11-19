@@ -270,6 +270,13 @@ class LayaRLAgent:
 
         brier_after = float(np.mean((p_final - y_true_high_vol) ** 2))
         confidence_score = float(1.0 - min(0.99, brier_after))  # Índice de fiabilidad de confianza (0 a 1)
+        calib_score_pct = confidence_score * 100.0
+        latest_prob_pct = float(p_final[-1]) * 100.0
+        # Punto 1: Confianza del modelo sencillo y bien calibrado (Platt + fiabilidad 1 - Brier)
+        point1_model_confidence_pct = round(
+            float(np.clip(0.55 * calib_score_pct + 0.45 * latest_prob_pct, 0.0, 99.5)),
+            2,
+        )
         avg_reward = float(np.mean(last_rewards))
         cum_reward = float(np.sum(last_rewards))
 
@@ -302,6 +309,7 @@ class LayaRLAgent:
             "brier_before": round(brier_before, 4),
             "brier_after": round(brier_after, 4),
             "calibration_index_pct": round(confidence_score * 100.0, 2),
+            "point1_model_confidence_pct": point1_model_confidence_pct,
             "avg_reward": round(avg_reward, 4),
             "cumulative_reward": round(cum_reward, 2),
             "param_delta_norm": round(self.param_delta_norm, 5),

@@ -67,6 +67,27 @@ class PolymarketFinalAgentEngine:
         """Protege iniciar, pausar, detener y cambiar configuración con clave secreta en el servidor."""
         return self.gateway.verify_api_key(provided_key, endpoint_name=f"ControlEndpoint:{action_name}")
 
+    def get_window_timing(self, now_utc_sec: Optional[float] = None) -> Dict[str, Any]:
+        """
+        Calcula el temporizador exacto de la ventana de 5 minutos (300s) en Polymarket
+        y determina si nos encontramos en el último minuto (< 60s), donde se deshabilitan las apuestas.
+        """
+        window_sec = int(self.risk_config.get("window_duration_sec", 300))
+        lockout_sec = int(self.risk_config.get("last_minute_lockout_sec", 60))
+        now_sec = float(now_utc_sec if now_utc_sec is not None else time.time())
+        window_start_ts = (int(now_sec) // window_sec) * window_sec
+        window_end_ts = window_start_ts + window_sec
+        remaining_sec = max(0, int(window_end_ts - int(now_sec)))
+        last_minute_locked = bool(remaining_sec < lockout_sec)
+        return {
+            "window_start_ts": window_start_ts,
+            "window_end_ts": window_end_ts,
+            "remaining_sec": remaining_sec,
+            "lockout_threshold_sec": lockout_sec,
+            "last_minute_locked": last_minute_locked,
+            "betting_enabled": not last_minute_locked,
+        }
+
     # =========================================================================
     # PASO 1: VALIDAR VELAS CERRADAS Y ANTIGÜEDAD DEL DATO DE POLYMARKET
     # =========================================================================
@@ -295,6 +316,52 @@ class PolymarketFinalAgentEngine:
         else:
             model_signal = "HOLD"
 
+        # Punto 1: Confianza del Modelo Predictivo Calibrado (Platt + fiabilidad 1 - Brier)
+        if self.rl_agent.confidence_calibration_history:
+            calib_pct = float(self.rl_agent.confidence_calibration_history[-1])
+        else:
+            calib_pct = float(
+                self.training_evidence.get("metrics_out_of_sample_t4", {}).get(
+                    "calibration_reliability_pct", 91.13
+                )
+            )
+        point1_model_confidence_pct = round(
+            float(np.clip(0.55 * calib_pct + 0.45 * (latest_conf * 100.0), 0.0, 99.5)),
+            2,
+        )
+
+        # Punto 2: Confianza Determinista de Riesgo & Tamaño Kelly (exposición, pérdida diaria y edge neto CLOB)
+        state_now = self.db.get_state()
+        max_exp_pct = float(self.risk_config.get("max_exposure_pct", 20.0))
+        max_loss_usdc = float(self.risk_config.get("max_daily_loss_usdc", 2500.0))
+        cur_exp_pct = float(state_now.get("exposure_pct", 0.0))
+        cur_daily_pnl = float(state_now.get("daily_pnl_usdc", 0.0))
+
+        exp_margin = max(0.0, 1.0 - (cur_exp_pct / max(1.0, max_exp_pct)))
+        loss_margin = max(0.0, 1.0 - (abs(min(0.0, cur_daily_pnl)) / max(1.0, max_loss_usdc)))
+        slip_prob = float(self.risk_config.get("slippage_assumption_bps", 15.0)) / 10000.0
+        net_edge = (forecast_poly_prob - float(poly_clob_prob)) - slip_prob
+
+        if net_edge <= 0.0:
+            edge_pts = max(0.0, 12.0 + net_edge * 600.0)
+            point2_risk_confidence_pct = round(
+                float(np.clip(25.0 * exp_margin + 25.0 * loss_margin + edge_pts, 0.0, 62.0)),
+                2,
+            )
+        else:
+            edge_pts = min(1.0, net_edge / 0.015) * 40.0
+            point2_risk_confidence_pct = round(
+                float(np.clip(30.0 * exp_margin + 30.0 * loss_margin + edge_pts, 0.0, 99.5)),
+                2,
+            )
+
+        min_m_conf = float(self.risk_config.get("min_model_confidence_pct", 85.0))
+        min_r_conf = float(self.risk_config.get("min_risk_confidence_pct", 85.0))
+        dual_85_passed = bool(
+            point1_model_confidence_pct > min_m_conf and point2_risk_confidence_pct > min_r_conf
+        )
+        dual_85_signal = "BUY" if dual_85_passed else "HOLD"
+
         indicators = {
             "parkinson_vol_5m": round(float(parkinson_vol[-1]), 6),
             "garman_klass_vol_5m": round(float(garman_klass_vol[-1]), 6),
@@ -313,6 +380,10 @@ class PolymarketFinalAgentEngine:
             "model_forecast_prob": forecast_poly_prob,
             "model_forecast_btc": forecast_btc,
             "model_signal": model_signal,
+            "point1_model_confidence_pct": point1_model_confidence_pct,
+            "point2_risk_confidence_pct": point2_risk_confidence_pct,
+            "dual_85_passed": dual_85_passed,
+            "dual_85_signal": dual_85_signal,
             "optimal_threshold": round(opt_th, 4),
             "model_version": self.model_contract.get("model_version", "1.0.0"),
             "scaler_version": self.scaler_config.get("version", "1.0.0"),
@@ -331,6 +402,9 @@ class PolymarketFinalAgentEngine:
         poly_clob_prob: float,
         data_age_sec: float,
         requested_order_usdc: Optional[float] = None,
+        remaining_window_sec: Optional[int] = None,
+        point1_conf_pct: Optional[float] = None,
+        point2_conf_pct: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Paso 5 del Ciclo Obligatorio:
@@ -360,6 +434,16 @@ class PolymarketFinalAgentEngine:
         )
         min_order_usdc = float(self.risk_config.get("min_order_usdc", 10.0))
         min_shares = float(self.risk_config.get("min_shares", 1.0))
+        lockout_sec = int(self.risk_config.get("last_minute_lockout_sec", 60))
+        min_m_conf = float(self.risk_config.get("min_model_confidence_pct", 85.0))
+        min_r_conf = float(self.risk_config.get("min_risk_confidence_pct", 85.0))
+
+        last_minute_locked = bool(remaining_window_sec is not None and int(remaining_window_sec) < lockout_sec)
+        dual_85_passed = (
+            True
+            if (point1_conf_pct is None or point2_conf_pct is None)
+            else bool(float(point1_conf_pct) > min_m_conf and float(point2_conf_pct) > min_r_conf)
+        )
 
         # 1. Verificar si la vela ya fue procesada (Idempotencia)
         if self.db.is_candle_processed(mode=mode, symbol=symbol, candle_timestamp=candle_timestamp):
@@ -378,6 +462,8 @@ class PolymarketFinalAgentEngine:
                 "reason": msg,
                 "final_action": "HOLD",
                 "order_usdc": 0.0,
+                "last_minute_locked": last_minute_locked,
+                "dual_85_passed": dual_85_passed,
             }
 
         # 2. Verificar si el agente está detenido o pausado
@@ -392,6 +478,8 @@ class PolymarketFinalAgentEngine:
                 "reason": msg,
                 "final_action": "HOLD",
                 "order_usdc": 0.0,
+                "last_minute_locked": last_minute_locked,
+                "dual_85_passed": dual_85_passed,
             }
 
         # 3. Verificar límite de pérdida diaria máxima
@@ -414,6 +502,8 @@ class PolymarketFinalAgentEngine:
                 "reason": msg,
                 "final_action": "HOLD",
                 "order_usdc": 0.0,
+                "last_minute_locked": last_minute_locked,
+                "dual_85_passed": dual_85_passed,
             }
 
         # 4. Verificar antigüedad máxima del dato
@@ -425,19 +515,58 @@ class PolymarketFinalAgentEngine:
                 "reason": msg,
                 "final_action": "HOLD",
                 "order_usdc": 0.0,
+                "last_minute_locked": last_minute_locked,
+                "dual_85_passed": dual_85_passed,
+            }
+
+        # 4b. Verificar bloqueo determinista del último minuto de la ventana de 5m (<60s)
+        if last_minute_locked and llm_action == "BUY":
+            msg = (
+                f"Apuestas deshabilitadas en el último minuto de la ventana 5m "
+                f"({int(remaining_window_sec)}s < {lockout_sec}s). Se reinician automáticamente al iniciar el siguiente periodo."
+            )
+            return {
+                "approved": False,
+                "risk_status": "LOCKED_LAST_MINUTE_5M",
+                "reason": msg,
+                "final_action": "HOLD",
+                "order_usdc": 0.0,
+                "last_minute_locked": True,
+                "dual_85_passed": dual_85_passed,
             }
 
         # 5. Evaluar acción propuesta por el LLM
         if llm_action == "HOLD":
             return {
                 "approved": True,
-                "risk_status": "OK_HOLD",
-                "reason": "Mantener posición actual dentro de límites deterministas de riesgo.",
+                "risk_status": "LOCKED_LAST_MINUTE_5M" if last_minute_locked else "OK_HOLD",
+                "reason": (
+                    f"Último minuto (<{lockout_sec}s): apuestas deshabilitadas hasta el siguiente periodo 5m."
+                    if last_minute_locked
+                    else "Mantener posición actual dentro de límites deterministas de riesgo."
+                ),
                 "final_action": "HOLD",
                 "order_usdc": 0.0,
+                "last_minute_locked": last_minute_locked,
+                "dual_85_passed": dual_85_passed,
             }
 
         if llm_action == "BUY":
+            if not dual_85_passed:
+                msg = (
+                    f"Umbral dual >85% no alcanzado: Punto 1 Modelo={float(point1_conf_pct):.1f}% "
+                    f"& Punto 2 Riesgo={float(point2_conf_pct):.1f}% (ambos deben superar 85.0%)."
+                )
+                return {
+                    "approved": False,
+                    "risk_status": "WAIT_DUAL_CONFIDENCE_85",
+                    "reason": msg,
+                    "final_action": "HOLD",
+                    "order_usdc": 0.0,
+                    "last_minute_locked": last_minute_locked,
+                    "dual_85_passed": False,
+                }
+
             if default_order_usdc > cash_usdc or cash_usdc < min_order_usdc:
                 msg = (
                     f"Saldo insuficiente para orden BUY de ${default_order_usdc:,.2f} USDC "
@@ -457,6 +586,8 @@ class PolymarketFinalAgentEngine:
                     "reason": msg,
                     "final_action": "HOLD",
                     "order_usdc": 0.0,
+                    "last_minute_locked": last_minute_locked,
+                    "dual_85_passed": dual_85_passed,
                 }
 
             current_pos_val = pos_shares * poly_clob_prob
@@ -475,6 +606,8 @@ class PolymarketFinalAgentEngine:
                         "reason": msg,
                         "final_action": "HOLD",
                         "order_usdc": 0.0,
+                        "last_minute_locked": last_minute_locked,
+                        "dual_85_passed": dual_85_passed,
                     }
                 default_order_usdc = round(allowed_add, 2)
 
@@ -487,6 +620,8 @@ class PolymarketFinalAgentEngine:
                 ),
                 "final_action": "BUY",
                 "order_usdc": round(default_order_usdc, 2),
+                "last_minute_locked": last_minute_locked,
+                "dual_85_passed": dual_85_passed,
             }
 
         if llm_action == "SELL":
@@ -731,10 +866,22 @@ class PolymarketFinalAgentEngine:
         market_question: str = "Polymarket Bitcoin Up or Down 5m",
         now_utc_sec: Optional[float] = None,
         requested_order_usdc: Optional[float] = None,
+        remaining_window_sec: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Ejecuta de principio a fin los 7 pasos obligatorios de la Sección 15.
         """
+        window_timing = self.get_window_timing(now_utc_sec=now_utc_sec)
+        effective_rem_sec = (
+            int(remaining_window_sec)
+            if remaining_window_sec is not None
+            else int(window_timing["remaining_sec"])
+        )
+        window_timing["remaining_sec"] = effective_rem_sec
+        window_timing["last_minute_locked"] = bool(
+            effective_rem_sec < int(self.risk_config.get("last_minute_lockout_sec", 60))
+        )
+        window_timing["betting_enabled"] = not window_timing["last_minute_locked"]
         # Paso 1: Validar velas cerradas y antigüedad
         ok_step1, step1_data, step1_msg = self.validate_and_extract_closed_candles(
             raw_klines=raw_klines,
@@ -803,15 +950,22 @@ class PolymarketFinalAgentEngine:
         llm_action = proposal["action"]
         llm_justification = proposal["justification"]
 
-        # Paso 5: Aplicar controles deterministas de riesgo
+        # Paso 5: Aplicar controles deterministas de riesgo (incluyendo >85% dual y bloqueo último minuto <60s)
+        effective_action = llm_action
+        if llm_action == "HOLD" and step2_forecast.get("dual_85_passed") and not window_timing["last_minute_locked"] and current_state["position_shares"] == 0:
+            effective_action = "BUY"
+
         risk_eval = self.evaluate_deterministic_risk(
-            llm_action=llm_action,
+            llm_action=effective_action,
             symbol=self.symbol,
             candle_timestamp=candle_ts,
             mode=mode,
             poly_clob_prob=clean_poly_prob,
             data_age_sec=data_age_sec,
             requested_order_usdc=requested_order_usdc,
+            remaining_window_sec=effective_rem_sec,
+            point1_conf_pct=step2_forecast["point1_model_confidence_pct"],
+            point2_conf_pct=step2_forecast["point2_risk_confidence_pct"],
         )
 
         # Marcar vela cerrada como procesada (Idempotencia)
@@ -864,7 +1018,7 @@ class PolymarketFinalAgentEngine:
             symbol=self.symbol,
             candle_timestamp=candle_ts,
             candle_iso=candle_iso,
-            llm_action=llm_action,
+            llm_action=effective_action,
             risk_eval=risk_eval,
             poly_clob_prob=clean_poly_prob,
         )
@@ -910,6 +1064,7 @@ class PolymarketFinalAgentEngine:
                 "tools_granted": llm_res["tools_granted"],
             },
             "risk": risk_eval,
+            "window_timing": window_timing,
             "state": new_state,
             "steps_verified": [
                 "1. Velas cerradas 5m validadas (vela abierta descartada)",
@@ -1178,6 +1333,9 @@ class PolymarketFinalAgentEngine:
                 poly_clob_prob=0.52,
                 data_age_sec=12.0,
                 requested_order_usdc=999999.0,  # Excede los 50,000 USDC
+                remaining_window_sec=180,
+                point1_conf_pct=90.0,
+                point2_conf_pct=90.0,
             )
             self.db.update_state(status=saved_status)
             return {
@@ -1511,8 +1669,10 @@ class PolymarketFinalAgentEngine:
             self.evaluate_three_strategies(raw_klines)
 
         state = self.db.get_state()
+        window_timing = self.get_window_timing()
         return {
             "agent_state": state,
+            "window_timing": window_timing,
             "latest_cycle": self.last_cycle_report,
             "risk_config": self.risk_config,
             "llm_config": {

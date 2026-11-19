@@ -177,9 +177,11 @@ class LivePaperBetEngine:
         stake_usd: float,
         force_open: bool = False,
         force_settle: bool = False,
+        remaining_window_sec: int = 180,
     ) -> Dict[str, Any]:
         now = time.time()
         now_str = datetime.now().strftime("%H:%M:%S")
+        last_minute_locked = bool(int(remaining_window_sec) < 60)
 
         # 1. Si hay una apuesta activa en curso, actualizar su PnL flotante o liquidarla
         if self.active_bet is not None:
@@ -225,8 +227,8 @@ class LivePaperBetEngine:
             if remaining_sec <= 0 or force_settle:
                 self._settle_current_bet(now_str)
 
-        # 2. Si no hay apuesta activa y (los agentes aprobaron TRUE o el usuario pidió abrir apuesta)
-        if self.active_bet is None and (force_open or approved_boolean):
+        # 2. Si no hay apuesta activa, NO estamos en el último minuto (<60s) y (los agentes aprobaron >85% dual o el usuario pidió abrir apuesta)
+        if self.active_bet is None and not last_minute_locked and (force_open or approved_boolean):
             self.bet_counter += 1
             eff_kelly = kelly_pct if kelly_pct > 0 else 5.5
             eff_stake = stake_usd if stake_usd > 0 else round(self.bankroll_usd * (eff_kelly / 100.0), 2)
@@ -278,6 +280,8 @@ class LivePaperBetEngine:
             "losses": self.losses,
             "total_closed": total_closed,
             "win_rate_pct": win_rate,
+            "last_minute_locked": last_minute_locked,
+            "remaining_window_sec": int(remaining_window_sec),
             "active_bet": self.active_bet,
             "live_trades_log": self.live_trades_log[-20:],
             "equity_history": self.equity_history[-40:],

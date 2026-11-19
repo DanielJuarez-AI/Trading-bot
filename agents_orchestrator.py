@@ -120,7 +120,13 @@ class AutoTrainerAgent:
         probs = rl_out["probs"]
         latest_conf = float(probs[-1])
         opt_thresh = float(rl_out["optimal_threshold"])
-        raw_bool = bool(latest_conf >= opt_thresh)
+        point1_conf_pct = float(
+            rl_out.get(
+                "point1_model_confidence_pct",
+                round(0.55 * float(rl_out["calibration_index_pct"]) + 0.45 * (latest_conf * 100.0), 2),
+            )
+        )
+        raw_bool = bool(latest_conf >= opt_thresh and point1_conf_pct > 85.0)
 
         return {
             "agent": self.name,
@@ -131,6 +137,8 @@ class AutoTrainerAgent:
             "learning_rate": round(rl_agent.lr, 4),
             "raw_boolean": raw_bool,
             "latest_confidence_pct": round(latest_conf * 100.0, 2),
+            "point1_model_confidence_pct": round(point1_conf_pct, 2),
+            "point1_passes_85": bool(point1_conf_pct > 85.0),
             "optimal_threshold": opt_thresh,
             "temperature": rl_out["temperature"],
             "calibration_index_pct": rl_out["calibration_index_pct"],
@@ -157,32 +165,63 @@ class RiskManagerAgent:
         laya_model_prob: float,
         poly_real_prob: float,
         bankroll_usd: float,
+        remaining_window_sec: int = 180,
     ) -> Dict[str, Any]:
         raw_bool = trainer_report["raw_boolean"]
         conf = trainer_report["latest_confidence_pct"] / 100.0
         calib = trainer_report["calibration_index_pct"] / 100.0
+        point1_conf_pct = float(trainer_report.get("point1_model_confidence_pct", conf * 100.0))
         opt_thresh = trainer_report["optimal_threshold"]
 
         raw_edge = laya_model_prob - poly_real_prob
         effective_spread = min(0.035, (scout_report["clob_spread_pct"] / 100.0) * 0.25)
         net_edge = raw_edge - effective_spread
+        liquidity_score = float(scout_report.get("liquidity_score", 80.0))
+
+        # Punto 2: Confianza determinista de riesgo y Kelly fraccional (0-100%)
+        if net_edge <= 0.001 or calib < 0.72:
+            point2_risk_conf_pct = round(
+                float(np.clip(35.0 + (liquidity_score / 100.0) * 20.0 + max(-0.02, net_edge) * 200.0, 0.0, 62.0)),
+                2,
+            )
+        else:
+            edge_component = min(1.0, max(0.0, net_edge / 0.015)) * 30.0
+            liq_component = min(1.0, max(0.0, liquidity_score / 100.0)) * 35.0
+            calib_component = min(1.0, max(0.0, calib)) * 35.0
+            point2_risk_conf_pct = round(float(np.clip(edge_component + liq_component + calib_component, 0.0, 99.5)), 2)
+
+        last_minute_locked = bool(int(remaining_window_sec) < 60)
+        dual_85_passed = bool(point1_conf_pct > 85.0 and point2_risk_conf_pct > 85.0)
 
         veto_applied = False
         veto_reason = "Señal validada sin objeciones"
 
-        if raw_bool:
-            if net_edge <= 0.001:
-                veto_applied = True
-                veto_reason = f"VETO: Edge bruto (+{raw_edge*100:.2f}%) no supera costo de spread"
-            elif calib < 0.72:
-                veto_applied = True
-                veto_reason = f"VETO: Fiabilidad Brier ({calib*100:.1f}%) por debajo del mínimo (72%)"
-            else:
-                veto_reason = "APROBADO: Edge positivo y confianza calibrada"
+        if last_minute_locked:
+            veto_applied = True
+            veto_reason = "BLOQUEO ÚLTIMO MINUTO (<60s): Apuestas deshabilitadas hasta el siguiente periodo 5m"
+        elif net_edge <= 0.001:
+            veto_applied = True
+            veto_reason = f"VETO: Edge bruto (+{raw_edge*100:.2f}%) no supera costo de spread"
+        elif calib < 0.72:
+            veto_applied = True
+            veto_reason = f"VETO: Fiabilidad Brier ({calib*100:.1f}%) por debajo del mínimo (72%)"
+        elif not dual_85_passed:
+            veto_reason = (
+                f"EN ESPERA (>85% requerido): Punto 1 Modelo={point1_conf_pct:.1f}% | "
+                f"Punto 2 Riesgo={point2_risk_conf_pct:.1f}%"
+            )
         else:
-            veto_reason = "EN ESPERA: Confianza por debajo del umbral optimo RL"
+            veto_reason = (
+                f"APROBADO (>85% DUAL): Punto 1={point1_conf_pct:.1f}% & "
+                f"Punto 2={point2_risk_conf_pct:.1f}% con Edge neto positivo"
+            )
 
-        approved_boolean = bool(raw_bool and not veto_applied)
+        approved_boolean = bool(
+            not last_minute_locked
+            and not veto_applied
+            and dual_85_passed
+            and raw_bool
+        )
 
         # Cálculo de Criterio de Kelly Fraccional (0.25x Kelly por seguridad en velas de 5m)
         if approved_boolean:
@@ -196,17 +235,28 @@ class RiskManagerAgent:
 
         stake_usd = round(bankroll_usd * kelly_fraction, 2)
         risk_level = (
-            "ALTO" if kelly_fraction > 0.05 else ("MODERADO" if kelly_fraction > 0.01 else "NEUTRAL (0%)")
+            "BLOQUEO_ULTIMO_MINUTO"
+            if last_minute_locked
+            else ("ALTO" if kelly_fraction > 0.05 else ("MODERADO" if kelly_fraction > 0.01 else "NEUTRAL (0%)"))
         )
 
         return {
             "agent": self.name,
             "role": self.role,
-            "status": "VETO ACTIVO" if veto_applied else ("ORDEN APROBADA" if approved_boolean else "PROTECCIÓN CAPITAL"),
+            "status": (
+                "BLOQUEADO (<60s)"
+                if last_minute_locked
+                else ("VETO ACTIVO" if veto_applied else ("ORDEN APROBADA" if approved_boolean else "PROTECCIÓN CAPITAL"))
+            ),
             "raw_boolean": raw_bool,
             "approved_boolean": approved_boolean,
             "veto_applied": veto_applied,
             "veto_reason": veto_reason,
+            "point1_model_confidence_pct": round(point1_conf_pct, 2),
+            "point2_risk_confidence_pct": point2_risk_conf_pct,
+            "dual_85_passed": dual_85_passed,
+            "last_minute_locked": last_minute_locked,
+            "remaining_window_sec": int(remaining_window_sec),
             "raw_edge_pct": round(raw_edge * 100.0, 2),
             "net_edge_pct": round(net_edge * 100.0, 2),
             "kelly_fraction_pct": round(kelly_fraction * 100.0, 2),
@@ -353,6 +403,7 @@ class LayaMultiAgentOrchestrator:
         y_true_high_vol: np.ndarray,
         book_metrics: Dict[str, Any],
         base_epochs: int = 12,
+        remaining_window_sec: int = 180,
     ) -> Dict[str, Any]:
         now_str = datetime.now().strftime("%H:%M:%S")
 
@@ -392,6 +443,7 @@ class LayaMultiAgentOrchestrator:
             laya_model_prob=float(laya_model_curve[-1]),
             poly_real_prob=float(poly_real[-1]),
             bankroll_usd=self.executor.bankroll_usd,
+            remaining_window_sec=remaining_window_sec,
         )
 
         # 4. Agente Ejecutor y Auditor registra la orden y retroalimenta al Entrenador
@@ -424,10 +476,12 @@ class LayaMultiAgentOrchestrator:
                 "from": "AutoTrainerAgent",
                 "to": "RiskManagerAgent",
                 "channel": "INFERENCIA_BOOLEANA_RL",
-                "summary": f"Booleano Bruto: {trainer_rep['raw_boolean']} | Confianza: {trainer_rep['latest_confidence_pct']}% | Umbral={trainer_rep['optimal_threshold']} | Calib: {trainer_rep['calibration_index_pct']}%",
+                "summary": f"Booleano Bruto: {trainer_rep['raw_boolean']} | Punto 1 Modelo: {trainer_rep['point1_model_confidence_pct']}% (>85%={trainer_rep['point1_passes_85']}) | Umbral={trainer_rep['optimal_threshold']} | Calib: {trainer_rep['calibration_index_pct']}%",
                 "payload": {
                     "raw_boolean": trainer_rep["raw_boolean"],
                     "confidence_pct": trainer_rep["latest_confidence_pct"],
+                    "point1_model_confidence_pct": trainer_rep["point1_model_confidence_pct"],
+                    "point1_passes_85": trainer_rep["point1_passes_85"],
                     "optimal_threshold": trainer_rep["optimal_threshold"],
                     "temperature": trainer_rep["temperature"],
                     "epochs_run": trainer_rep["epochs_executed"],
@@ -439,10 +493,15 @@ class LayaMultiAgentOrchestrator:
                 "from": "RiskManagerAgent",
                 "to": "ExecutionAuditorAgent",
                 "channel": "VALIDACION_KELLY_Y_VETO",
-                "summary": f"Decisión Final: {risk_rep['approved_boolean']} | {risk_rep['veto_reason']} | Kelly: {risk_rep['kelly_fraction_pct']}% (${risk_rep['stake_usd']})",
+                "summary": f"Decisión Final: {risk_rep['approved_boolean']} | Punto 2 Riesgo: {risk_rep['point2_risk_confidence_pct']}% | Dual>85%: {risk_rep['dual_85_passed']} | {risk_rep['veto_reason']}",
                 "payload": {
                     "approved_boolean": risk_rep["approved_boolean"],
                     "veto_applied": risk_rep["veto_applied"],
+                    "point1_model_confidence_pct": risk_rep["point1_model_confidence_pct"],
+                    "point2_risk_confidence_pct": risk_rep["point2_risk_confidence_pct"],
+                    "dual_85_passed": risk_rep["dual_85_passed"],
+                    "last_minute_locked": risk_rep["last_minute_locked"],
+                    "remaining_window_sec": risk_rep["remaining_window_sec"],
                     "net_edge_pct": risk_rep["net_edge_pct"],
                     "kelly_stake_usd": risk_rep["stake_usd"],
                 },

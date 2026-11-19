@@ -46,6 +46,8 @@ POLY_5M_SYNC_CACHE = {
     "end_date": "",
     "atomic_server_ms": 0,
     "pc_clock_drift_sec": 0.0,
+    "remaining_window_sec": 180,
+    "last_minute_locked": False,
 }
 
 
@@ -167,6 +169,8 @@ def fetch_polymarket_5m_live_event(window_offset_sec: int = 0, custom_slug: str 
                 except Exception:
                     ptb_val = None
 
+            atomic_ms = int(atomic_now() * 1000)
+            rem_win_sec = max(0, (w_ts + 300) - int(atomic_ms // 1000))
             result = {
                 "ts": time.time(),
                 "window_ts": w_ts,
@@ -178,16 +182,22 @@ def fetch_polymarket_5m_live_event(window_offset_sec: int = 0, custom_slug: str 
                 "up_cents": up_cents,
                 "down_cents": down_cents,
                 "end_date": ev.get("endDate") or "",
-                "atomic_server_ms": int(atomic_now() * 1000),
+                "atomic_server_ms": atomic_ms,
                 "pc_clock_drift_sec": round(-ATOMIC_CLOCK_OFFSET_SEC, 2),
+                "remaining_window_sec": rem_win_sec,
+                "last_minute_locked": bool(rem_win_sec < 60),
             }
             POLY_5M_SYNC_CACHE.update(result)
             return result
         except Exception:
             continue
 
-    POLY_5M_SYNC_CACHE["atomic_server_ms"] = int(atomic_now() * 1000)
+    atomic_ms = int(atomic_now() * 1000)
+    rem_win_sec = max(0, ((int(atomic_ms // 1000) // 300 + 1) * 300) - int(atomic_ms // 1000))
+    POLY_5M_SYNC_CACHE["atomic_server_ms"] = atomic_ms
     POLY_5M_SYNC_CACHE["pc_clock_drift_sec"] = round(-ATOMIC_CLOCK_OFFSET_SEC, 2)
+    POLY_5M_SYNC_CACHE["remaining_window_sec"] = rem_win_sec
+    POLY_5M_SYNC_CACHE["last_minute_locked"] = bool(rem_win_sec < 60)
     return POLY_5M_SYNC_CACHE
 
 
@@ -435,7 +445,10 @@ def train_and_evaluate_laya(
     next_vol[-1] = parkinson_vol[-1]
     y_true_high_vol = (next_vol >= vol_62th).astype(np.float64)
 
-    # 3. Ejecutar Ciclo del Orquestador Multi-Agente
+    # 3. Ejecutar Ciclo del Orquestador Multi-Agente con reloj 5m y bloqueo del último minuto (<60s)
+    sync_atomic_clock()
+    now_atomic_sec = int(atomic_now())
+    remaining_window_sec = max(0, ((now_atomic_sec // 300 + 1) * 300) - now_atomic_sec)
     orch_result = ORCHESTRATOR.run_cycle(
         market_question=market_question,
         token_id=token_id,
@@ -447,6 +460,7 @@ def train_and_evaluate_laya(
         y_true_high_vol=y_true_high_vol,
         book_metrics=book_metrics,
         base_epochs=rl_epochs,
+        remaining_window_sec=remaining_window_sec,
     )
 
     rl_out = orch_result["rl_out"]
@@ -479,12 +493,19 @@ def train_and_evaluate_laya(
     btc_std_window = float(np.std(closes[-24:])) if len(closes) >= 24 else float(np.std(closes))
     btc_std_window = max(12.0, btc_std_window)
 
+    book_imbalance = float(book_metrics.get("imbalance", 0.0))
+    clob_buyers_component = float(np.clip(50.0 + book_imbalance * 50.0, 5.0, 95.0))
+
     for i in range(n):
         dt_str = datetime.fromtimestamp(int(open_times[i])).strftime("%H:%M:%S")
         # Dirección estimada (UP o DOWN) combinando retorno, presión taker y confianza de volatilidad de Laya
         dir_signal = (taker_ratio[i] - 0.50) * 2.2 + np.sign(log_ret[i]) * (laya_confidence[i] - 0.45)
         pred_delta_usd = dir_signal * btc_std_window * 0.55
         laya_btc_usd = round(float(closes[i] + pred_delta_usd), 2)
+
+        taker_buyers_component = float(np.clip(taker_ratio[i] * 100.0, 5.0, 95.0))
+        buyers_pct_i = round(float(np.clip(0.70 * taker_buyers_component + 0.30 * clob_buyers_component, 5.0, 95.0)), 1)
+        sellers_pct_i = round(100.0 - buyers_pct_i, 1)
 
         series.append(
             {
@@ -499,6 +520,8 @@ def train_and_evaluate_laya(
                 "difference": round(float(differences[i]), 4),
                 "laya_bool": boolean_signals[i],
                 "trend": "UP" if laya_btc_usd >= closes[i] else "DOWN",
+                "buyers_pct": buyers_pct_i,
+                "sellers_pct": sellers_pct_i,
                 "rl_reward": round(float(rl_rewards[i]), 4),
                 "rl_advantage": round(float(rl_advantages[i]), 4),
             }
@@ -531,6 +554,7 @@ def train_and_evaluate_laya(
         stake_usd=risk_agent_rep["stake_usd"],
         force_open=force_open_bet,
         force_settle=force_settle_bet,
+        remaining_window_sec=remaining_window_sec,
     )
 
     # También incluir la simulación sobre las 96 velas históricas para referencia inmediata
@@ -565,6 +589,13 @@ def train_and_evaluate_laya(
             "model_accuracy": round(accuracy, 4),
             "threshold": active_threshold,
             "orderbook": book_metrics,
+            "buyers_pct": latest["buyers_pct"],
+            "sellers_pct": latest["sellers_pct"],
+            "point1_model_confidence_pct": risk_agent_rep["point1_model_confidence_pct"],
+            "point2_risk_confidence_pct": risk_agent_rep["point2_risk_confidence_pct"],
+            "dual_85_passed": risk_agent_rep["dual_85_passed"],
+            "remaining_window_sec": remaining_window_sec,
+            "last_minute_locked": risk_agent_rep["last_minute_locked"],
         },
         "rl": {
             "episodes_trained": rl_out["episodes_trained"],
@@ -670,7 +701,7 @@ class LayaDashboardHandler(BaseHTTPRequestHandler):
                     "openapi": "3.1.0",
                     "info": {
                         "title": "Laya Polymarket AI Financial Agent API",
-                        "version": "1.0.0",
+                        "version": "1.1.0",
                         "description": "API documentada del Agente de IA Financiero para Polymarket (Ciclo de 7 pasos, Ollama Local con Gateway Privado, Motor de Riesgo Determinista, Simulador Paper 50,000 USDC a 0.0% comisión y Persistencia SQLite).",
                     },
                     "security_architecture": {
@@ -713,7 +744,11 @@ class LayaDashboardHandler(BaseHTTPRequestHandler):
             if custom_slug or offset_sec != 0 or (time.time() - POLY_5M_SYNC_CACHE["ts"]) > 1.5:
                 sync_data = fetch_polymarket_5m_live_event(offset_sec, custom_slug)
             else:
-                POLY_5M_SYNC_CACHE["atomic_server_ms"] = int(atomic_now() * 1000)
+                atomic_ms = int(atomic_now() * 1000)
+                rem_win_sec = max(0, ((int(atomic_ms // 1000) // 300 + 1) * 300) - int(atomic_ms // 1000))
+                POLY_5M_SYNC_CACHE["atomic_server_ms"] = atomic_ms
+                POLY_5M_SYNC_CACHE["remaining_window_sec"] = rem_win_sec
+                POLY_5M_SYNC_CACHE["last_minute_locked"] = bool(rem_win_sec < 60)
                 sync_data = POLY_5M_SYNC_CACHE
             self._send_json(sync_data)
             return
