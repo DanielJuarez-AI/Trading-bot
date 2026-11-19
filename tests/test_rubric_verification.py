@@ -157,6 +157,102 @@ class TestPolymarketFinalProjectRubric(unittest.TestCase):
             self.assertIn("mean_latency_ms", s)
             self.assertIn("rejected_actions", s)
 
+    def test_08_dual_85_confidence_and_last_minute_lockout(self):
+        """Punto 1 + Punto 2 > 85% para operar y bloqueo en el último minuto (<60s) con reinicio al siguiente periodo."""
+        self.engine.db.reset_portfolio(clear_replay=True)
+        self.engine.set_human_control("START")
+
+        # 1. Cuando Punto 1 > 85% y Punto 2 > 85% y remaining_window_sec >= 60 (180s), aprueba la compra
+        res_ok = self.engine.evaluate_deterministic_risk(
+            llm_action="BUY",
+            symbol="POLY-BTC-5M",
+            candle_timestamp=1900000100,
+            mode="TEST_DUAL_85",
+            poly_clob_prob=0.52,
+            data_age_sec=5.0,
+            remaining_window_sec=180,
+            point1_conf_pct=87.5,
+            point2_conf_pct=88.2,
+        )
+        self.assertTrue(res_ok["approved"])
+        self.assertEqual(res_ok["risk_status"], "APPROVED_BUY")
+        self.assertEqual(res_ok["final_action"], "BUY")
+        self.assertFalse(res_ok["last_minute_locked"])
+        self.assertTrue(res_ok["dual_85_passed"])
+
+        # 2. Cuando Punto 1 <= 85% o Punto 2 <= 85%, NO se ejecuta operación (HOLD)
+        res_low_p1 = self.engine.evaluate_deterministic_risk(
+            llm_action="BUY",
+            symbol="POLY-BTC-5M",
+            candle_timestamp=1900000200,
+            mode="TEST_DUAL_85",
+            poly_clob_prob=0.52,
+            data_age_sec=5.0,
+            remaining_window_sec=180,
+            point1_conf_pct=84.9,
+            point2_conf_pct=91.0,
+        )
+        self.assertFalse(res_low_p1["approved"])
+        self.assertEqual(res_low_p1["risk_status"], "WAIT_DUAL_CONFIDENCE_85")
+        self.assertEqual(res_low_p1["final_action"], "HOLD")
+
+        res_low_p2 = self.engine.evaluate_deterministic_risk(
+            llm_action="BUY",
+            symbol="POLY-BTC-5M",
+            candle_timestamp=1900000300,
+            mode="TEST_DUAL_85",
+            poly_clob_prob=0.52,
+            data_age_sec=5.0,
+            remaining_window_sec=180,
+            point1_conf_pct=90.5,
+            point2_conf_pct=85.0,
+        )
+        self.assertFalse(res_low_p2["approved"])
+        self.assertEqual(res_low_p2["risk_status"], "WAIT_DUAL_CONFIDENCE_85")
+        self.assertEqual(res_low_p2["final_action"], "HOLD")
+
+        # 3. En el último minuto (< 60s, ej. 45s), las apuestas quedan deshabilitadas aunque ambas superen 85%
+        res_locked = self.engine.evaluate_deterministic_risk(
+            llm_action="BUY",
+            symbol="POLY-BTC-5M",
+            candle_timestamp=1900000400,
+            mode="TEST_DUAL_85",
+            poly_clob_prob=0.52,
+            data_age_sec=5.0,
+            remaining_window_sec=45,
+            point1_conf_pct=93.0,
+            point2_conf_pct=94.0,
+        )
+        self.assertFalse(res_locked["approved"])
+        self.assertEqual(res_locked["risk_status"], "LOCKED_LAST_MINUTE_5M")
+        self.assertEqual(res_locked["final_action"], "HOLD")
+        self.assertTrue(res_locked["last_minute_locked"])
+
+        # Verificar también que get_window_timing detecta el último minuto y la reapertura
+        timing_locked = self.engine.get_window_timing(now_utc_sec=1900000455.0)  # +255s en ventana -> quedan 45s
+        self.assertTrue(timing_locked["last_minute_locked"])
+        self.assertFalse(timing_locked["betting_enabled"])
+
+        # 4. Al iniciar el siguiente periodo (remaining_window_sec = 295 >= 60), se reactivan las apuestas
+        timing_next = self.engine.get_window_timing(now_utc_sec=1900000505.0)  # +5s en siguiente ventana -> quedan 295s
+        self.assertFalse(timing_next["last_minute_locked"])
+        self.assertTrue(timing_next["betting_enabled"])
+
+        res_reopened = self.engine.evaluate_deterministic_risk(
+            llm_action="BUY",
+            symbol="POLY-BTC-5M",
+            candle_timestamp=1900000500,
+            mode="TEST_DUAL_85",
+            poly_clob_prob=0.52,
+            data_age_sec=5.0,
+            remaining_window_sec=timing_next["remaining_sec"],
+            point1_conf_pct=90.0,
+            point2_conf_pct=91.0,
+        )
+        self.assertTrue(res_reopened["approved"])
+        self.assertEqual(res_reopened["risk_status"], "APPROVED_BUY")
+        self.assertFalse(res_reopened["last_minute_locked"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

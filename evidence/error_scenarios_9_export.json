@@ -43,7 +43,7 @@
       "scenario_code": "INSUFFICIENT_BALANCE",
       "handled_correctly": true,
       "agent_response": "REJECT_ORDER_NO_LEVERAGE",
-      "message": "Saldo insuficiente para orden BUY de $999,999.00 USDC (Efectivo disponible: $50,000.00 USDC; apalancamiento prohibido)."
+      "message": "Saldo insuficiente para orden BUY de $999,999.00 USDC (Efectivo disponible: $47,500.00 USDC; apalancamiento prohibido)."
     },
     {
       "scenario_code": "DUPLICATE_EVENT",
@@ -55,54 +55,54 @@
       "scenario_code": "BACKEND_RESTART",
       "handled_correctly": true,
       "agent_response": "STATE_RESTORED_FROM_SQLITE_WITHOUT_DUPLICATES",
-      "message": "Estado recuperado desde SQLite WAL sin duplicar operaciones: Efectivo=$50,000.00 USDC, Posición=0.00 shares, Recuperaciones=1."
+      "message": "Estado recuperado desde SQLite WAL sin duplicar operaciones: Efectivo=$47,500.00 USDC, Posición=4,985.04 shares, Recuperaciones=5."
     },
     {
       "scenario_code": "EMERGENCY_STOP_BUTTON",
       "handled_correctly": true,
       "agent_response": "STOPPED_NEW_ORDERS_BLOCKED_POSITION_PRESERVED",
-      "message": "Agente DETENIDO (Botón de Detención): nuevas órdenes bloqueadas. Posición preservada sin liquidar automáticamente (0.00 shares abiertas, Efectivo: $50,000.00 USDC). | Verificación posterior: Agente en estado STOPPED: se bloquean nuevas órdenes y se conserva la posición actual (0.00 shares)."
+      "message": "Agente DETENIDO (Botón de Detención): nuevas órdenes bloqueadas. Posición preservada sin liquidar automáticamente (4985.04 shares abiertas, Efectivo: $47,500.00 USDC). | Verificación posterior: Agente en estado STOPPED: se bloquean nuevas órdenes y se conserva la posición actual (4985.04 shares)."
     }
   ],
   "recent_error_logs": [
     {
-      "error_id": 13,
+      "error_id": 52,
       "scenario_code": "EMERGENCY_STOP_BUTTON",
       "severity": "INFO",
       "component": "HumanControlPanel",
-      "message": "Agente DETENIDO (Botón de Detención): nuevas órdenes bloqueadas. Posición preservada sin liquidar automáticamente (0.00 shares abiertas, Efectivo: $50,000.00 USDC).",
+      "message": "Agente DETENIDO (Botón de Detención): nuevas órdenes bloqueadas. Posición preservada sin liquidar automáticamente (4985.04 shares abiertas, Efectivo: $47,500.00 USDC).",
       "retries_attempted": 0,
       "backoff_schedule": "",
       "agent_action_taken": "STOP_AND_HOLD_POSITION",
-      "details_json": "{\"liquidated\": false, \"position_shares_preserved\": 0.0, \"cash_usdc\": 50000.0}",
-      "created_at": "2026-11-17T20:49:08Z",
+      "details_json": "{\"liquidated\": false, \"position_shares_preserved\": 4985.04, \"cash_usdc\": 47500.0}",
+      "created_at": "2026-11-19T15:19:16Z",
       "details": {
         "liquidated": false,
-        "position_shares_preserved": 0.0,
-        "cash_usdc": 50000.0
+        "position_shares_preserved": 4985.04,
+        "cash_usdc": 47500.0
       }
     },
     {
-      "error_id": 12,
+      "error_id": 51,
       "scenario_code": "BACKEND_RESTART",
       "severity": "INFO",
       "component": "SQLitePersistenceEngine",
-      "message": "Estado recuperado tras reinicio (#1): Efectivo=$50,000.00 USDC, Posición=0.00 shares, 2 velas indexadas con idempotencia activa (0 operaciones duplicadas).",
+      "message": "Estado recuperado tras reinicio (#5): Efectivo=$47,500.00 USDC, Posición=4,985.04 shares, 36 velas indexadas con idempotencia activa (0 operaciones duplicadas).",
       "retries_attempted": 0,
       "backoff_schedule": "N/A (Recuperación transaccional WAL)",
       "agent_action_taken": "STATE_RESTORED_WITHOUT_DUPLICATES",
-      "details_json": "{\"cash_usdc\": 50000.0, \"position_shares\": 0.0, \"processed_candles_count\": 2, \"decisions_count\": 1, \"orders_count\": 0}",
-      "created_at": "2026-11-17T20:49:08Z",
+      "details_json": "{\"cash_usdc\": 47500.0, \"position_shares\": 4985.04, \"processed_candles_count\": 36, \"decisions_count\": 37, \"orders_count\": 6}",
+      "created_at": "2026-11-19T15:19:16Z",
       "details": {
-        "cash_usdc": 50000.0,
-        "position_shares": 0.0,
-        "processed_candles_count": 2,
-        "decisions_count": 1,
-        "orders_count": 0
+        "cash_usdc": 47500.0,
+        "position_shares": 4985.04,
+        "processed_candles_count": 36,
+        "decisions_count": 37,
+        "orders_count": 6
       }
     },
     {
-      "error_id": 11,
+      "error_id": 50,
       "scenario_code": "DUPLICATE_EVENT",
       "severity": "WARNING",
       "component": "DeterministicRiskEngine",
@@ -111,7 +111,7 @@
       "backoff_schedule": "",
       "agent_action_taken": "BLOCK_DUPLICATE_CANDLE",
       "details_json": "{\"mode\": \"TEST_DUP\", \"symbol\": \"POLY-BTC-5M\", \"candle_timestamp\": 1794945000}",
-      "created_at": "2026-11-17T20:49:08Z",
+      "created_at": "2026-11-19T15:19:16Z",
       "details": {
         "mode": "TEST_DUP",
         "symbol": "POLY-BTC-5M",
@@ -119,23 +119,23 @@
       }
     },
     {
-      "error_id": 10,
+      "error_id": 49,
       "scenario_code": "INSUFFICIENT_BALANCE",
       "severity": "HIGH",
       "component": "DeterministicRiskEngine",
-      "message": "Saldo insuficiente para orden BUY de $999,999.00 USDC (Efectivo disponible: $50,000.00 USDC; apalancamiento prohibido).",
+      "message": "Saldo insuficiente para orden BUY de $999,999.00 USDC (Efectivo disponible: $47,500.00 USDC; apalancamiento prohibido).",
       "retries_attempted": 0,
       "backoff_schedule": "",
       "agent_action_taken": "REJECT_ORDER",
-      "details_json": "{\"requested_usdc\": 999999.0, \"cash_usdc\": 50000.0}",
-      "created_at": "2026-11-17T20:49:08Z",
+      "details_json": "{\"requested_usdc\": 999999.0, \"cash_usdc\": 47500.0}",
+      "created_at": "2026-11-19T15:19:15Z",
       "details": {
         "requested_usdc": 999999.0,
-        "cash_usdc": 50000.0
+        "cash_usdc": 47500.0
       }
     },
     {
-      "error_id": 9,
+      "error_id": 48,
       "scenario_code": "INVALID_API_KEY",
       "severity": "SECURITY_HIGH",
       "component": "PrivateOllamaGateway",
@@ -144,14 +144,14 @@
       "backoff_schedule": "Sin reintento (HTTP 401)",
       "agent_action_taken": "REJECT_UNAUTHORIZED_REQUEST",
       "details_json": "{\"endpoint\": \"PrivateOllamaGateway\", \"reason\": \"invalid_api_key_masked\"}",
-      "created_at": "2026-11-17T20:49:08Z",
+      "created_at": "2026-11-19T15:19:15Z",
       "details": {
         "endpoint": "PrivateOllamaGateway",
         "reason": "invalid_api_key_masked"
       }
     },
     {
-      "error_id": 8,
+      "error_id": 47,
       "scenario_code": "INVALID_LLM_JSON",
       "severity": "HIGH",
       "component": "LLMJsonValidator",
@@ -160,13 +160,13 @@
       "backoff_schedule": "Validación de esquema fallida",
       "agent_action_taken": "REJECT_PROPOSAL_AND_HOLD",
       "details_json": "{\"raw_response\": \"{\\\"action\\\": \\\"SHORT_LEVERAGE_10X\\\", \\\"symbol\\\": \\\"INVALID-ASSET\\\", \\\"candle_date\\\": \\\"bad\\\"}\"}",
-      "created_at": "2026-11-17T20:49:08Z",
+      "created_at": "2026-11-19T15:19:15Z",
       "details": {
         "raw_response": "{\"action\": \"SHORT_LEVERAGE_10X\", \"symbol\": \"INVALID-ASSET\", \"candle_date\": \"bad\"}"
       }
     },
     {
-      "error_id": 7,
+      "error_id": 46,
       "scenario_code": "OLLAMA_DOWN",
       "severity": "CRITICAL",
       "component": "PrivateOllamaGateway",
@@ -175,14 +175,14 @@
       "backoff_schedule": "0.2s, 0.4s, 0.8s",
       "agent_action_taken": "PAUSE_DECISIONS",
       "details_json": "{\"ollama_host\": \"http://127.0.0.1:11434\", \"last_error\": \"<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>\"}",
-      "created_at": "2026-11-17T20:49:08Z",
+      "created_at": "2026-11-19T15:19:15Z",
       "details": {
         "ollama_host": "http://127.0.0.1:11434",
         "last_error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
       }
     },
     {
-      "error_id": 6,
+      "error_id": 45,
       "scenario_code": "STALE_DATA",
       "severity": "HIGH",
       "component": "PolymarketCandleValidator",
@@ -191,14 +191,14 @@
       "backoff_schedule": "0.2s (Validación determinista de frescura)",
       "agent_action_taken": "PAUSE_DECISIONS",
       "details_json": "{\"data_age_sec\": 985.0, \"max_data_age_sec\": 360.0}",
-      "created_at": "2026-11-17T20:49:00Z",
+      "created_at": "2026-11-19T15:19:08Z",
       "details": {
         "data_age_sec": 985.0,
         "max_data_age_sec": 360.0
       }
     },
     {
-      "error_id": 5,
+      "error_id": 44,
       "scenario_code": "API_TIMEOUT_OR_RATE_LIMIT",
       "severity": "CRITICAL",
       "component": "PolymarketMarketDataClient",
@@ -207,14 +207,31 @@
       "backoff_schedule": "0.2s, 0.4s, 0.8s",
       "agent_action_taken": "PAUSE_DECISIONS",
       "details_json": "{\"symbol\": \"POLY-BTC-5M\", \"http_status\": 429}",
-      "created_at": "2026-11-17T20:49:00Z",
+      "created_at": "2026-11-19T15:19:08Z",
       "details": {
         "symbol": "POLY-BTC-5M",
         "http_status": 429
       }
     },
     {
-      "error_id": 4,
+      "error_id": 43,
+      "scenario_code": "DUPLICATE_EVENT",
+      "severity": "WARNING",
+      "component": "DeterministicRiskEngine",
+      "message": "Evento duplicado bloqueado: la vela cerrada 1795098300 (LIVE) ya fue procesada.",
+      "retries_attempted": 0,
+      "backoff_schedule": "",
+      "agent_action_taken": "BLOCK_DUPLICATE_CANDLE",
+      "details_json": "{\"mode\": \"LIVE\", \"symbol\": \"POLY-BTC-5M\", \"candle_timestamp\": 1795098300}",
+      "created_at": "2026-11-19T14:31:17Z",
+      "details": {
+        "mode": "LIVE",
+        "symbol": "POLY-BTC-5M",
+        "candle_timestamp": 1795098300
+      }
+    },
+    {
+      "error_id": 42,
       "scenario_code": "EMERGENCY_STOP_BUTTON",
       "severity": "INFO",
       "component": "HumanControlPanel",
@@ -223,7 +240,7 @@
       "backoff_schedule": "",
       "agent_action_taken": "STOP_AND_HOLD_POSITION",
       "details_json": "{\"liquidated\": false, \"position_shares_preserved\": 0.0, \"cash_usdc\": 50000.0}",
-      "created_at": "2026-11-17T20:49:00Z",
+      "created_at": "2026-11-19T14:31:16Z",
       "details": {
         "liquidated": false,
         "position_shares_preserved": 0.0,
@@ -231,51 +248,151 @@
       }
     },
     {
-      "error_id": 3,
-      "scenario_code": "REAL_ORDER_BLOCKED",
-      "severity": "SECURITY_CRITICAL",
-      "component": "PolymarketExecutionGuard",
-      "message": "BLOQUEO DETERMINISTA: Intento de envío de orden real al CLOB de Polymarket rechazado. La ruta de negociación real está deshabilitada por diseño (allow_real_polymarket_orders=false).",
+      "error_id": 41,
+      "scenario_code": "BACKEND_RESTART",
+      "severity": "INFO",
+      "component": "SQLitePersistenceEngine",
+      "message": "Estado recuperado tras reinicio (#4): Efectivo=$50,000.00 USDC, Posición=0.00 shares, 34 velas indexadas con idempotencia activa (0 operaciones duplicadas).",
       "retries_attempted": 0,
-      "backoff_schedule": "",
-      "agent_action_taken": "BLOCK_REAL_ORDER",
-      "details_json": "{\"allow_real_polymarket_orders\": false, \"sandbox_mode\": \"PAPER_ONLY\"}",
-      "created_at": "2026-11-17T20:49:00Z",
+      "backoff_schedule": "N/A (Recuperación transaccional WAL)",
+      "agent_action_taken": "STATE_RESTORED_WITHOUT_DUPLICATES",
+      "details_json": "{\"cash_usdc\": 50000.0, \"position_shares\": 0.0, \"processed_candles_count\": 34, \"decisions_count\": 34, \"orders_count\": 5}",
+      "created_at": "2026-11-19T14:31:16Z",
       "details": {
-        "allow_real_polymarket_orders": false,
-        "sandbox_mode": "PAPER_ONLY"
+        "cash_usdc": 50000.0,
+        "position_shares": 0.0,
+        "processed_candles_count": 34,
+        "decisions_count": 34,
+        "orders_count": 5
       }
     },
     {
-      "error_id": 2,
+      "error_id": 40,
+      "scenario_code": "DUPLICATE_EVENT",
+      "severity": "WARNING",
+      "component": "DeterministicRiskEngine",
+      "message": "Evento duplicado bloqueado: la vela cerrada 1794945000 (TEST_DUP) ya fue procesada.",
+      "retries_attempted": 0,
+      "backoff_schedule": "",
+      "agent_action_taken": "BLOCK_DUPLICATE_CANDLE",
+      "details_json": "{\"mode\": \"TEST_DUP\", \"symbol\": \"POLY-BTC-5M\", \"candle_timestamp\": 1794945000}",
+      "created_at": "2026-11-19T14:31:16Z",
+      "details": {
+        "mode": "TEST_DUP",
+        "symbol": "POLY-BTC-5M",
+        "candle_timestamp": 1794945000
+      }
+    },
+    {
+      "error_id": 39,
+      "scenario_code": "INSUFFICIENT_BALANCE",
+      "severity": "HIGH",
+      "component": "DeterministicRiskEngine",
+      "message": "Saldo insuficiente para orden BUY de $999,999.00 USDC (Efectivo disponible: $50,000.00 USDC; apalancamiento prohibido).",
+      "retries_attempted": 0,
+      "backoff_schedule": "",
+      "agent_action_taken": "REJECT_ORDER",
+      "details_json": "{\"requested_usdc\": 999999.0, \"cash_usdc\": 50000.0}",
+      "created_at": "2026-11-19T14:31:16Z",
+      "details": {
+        "requested_usdc": 999999.0,
+        "cash_usdc": 50000.0
+      }
+    },
+    {
+      "error_id": 38,
       "scenario_code": "INVALID_API_KEY",
       "severity": "SECURITY_HIGH",
-      "component": "UnitTestGateway",
-      "message": "Acceso rechazado en UnitTestGateway: API key inválida (wro***).",
+      "component": "PrivateOllamaGateway",
+      "message": "Acceso rechazado en PrivateOllamaGateway: API key inválida (cla***).",
       "retries_attempted": 0,
       "backoff_schedule": "Sin reintento (HTTP 401)",
       "agent_action_taken": "REJECT_UNAUTHORIZED_REQUEST",
-      "details_json": "{\"endpoint\": \"UnitTestGateway\", \"reason\": \"invalid_api_key_masked\"}",
-      "created_at": "2026-11-17T20:49:00Z",
+      "details_json": "{\"endpoint\": \"PrivateOllamaGateway\", \"reason\": \"invalid_api_key_masked\"}",
+      "created_at": "2026-11-19T14:31:16Z",
       "details": {
-        "endpoint": "UnitTestGateway",
+        "endpoint": "PrivateOllamaGateway",
         "reason": "invalid_api_key_masked"
       }
     },
     {
-      "error_id": 1,
-      "scenario_code": "INVALID_API_KEY",
-      "severity": "SECURITY_HIGH",
-      "component": "UnitTestGateway",
-      "message": "Acceso rechazado en UnitTestGateway: cabecera X-API-Key ausente.",
+      "error_id": 37,
+      "scenario_code": "INVALID_LLM_JSON",
+      "severity": "HIGH",
+      "component": "LLMJsonValidator",
+      "message": "Falta el campo obligatorio 'justification' en la respuesta JSON del LLM.",
       "retries_attempted": 0,
-      "backoff_schedule": "Sin reintento (HTTP 401)",
-      "agent_action_taken": "REJECT_UNAUTHORIZED_REQUEST",
-      "details_json": "{\"endpoint\": \"UnitTestGateway\", \"reason\": \"missing_api_key\"}",
-      "created_at": "2026-11-17T20:49:00Z",
+      "backoff_schedule": "Validación de esquema fallida",
+      "agent_action_taken": "REJECT_PROPOSAL_AND_HOLD",
+      "details_json": "{\"raw_response\": \"{\\\"action\\\": \\\"SHORT_LEVERAGE_10X\\\", \\\"symbol\\\": \\\"INVALID-ASSET\\\", \\\"candle_date\\\": \\\"bad\\\"}\"}",
+      "created_at": "2026-11-19T14:31:16Z",
       "details": {
-        "endpoint": "UnitTestGateway",
-        "reason": "missing_api_key"
+        "raw_response": "{\"action\": \"SHORT_LEVERAGE_10X\", \"symbol\": \"INVALID-ASSET\", \"candle_date\": \"bad\"}"
+      }
+    },
+    {
+      "error_id": 36,
+      "scenario_code": "OLLAMA_DOWN",
+      "severity": "CRITICAL",
+      "component": "PrivateOllamaGateway",
+      "message": "Ollama local en http://127.0.0.1:11434 no respondió tras 3 reintentos con espera creciente (0.2s, 0.4s, 0.8s). Se pausan nuevas decisiones.",
+      "retries_attempted": 3,
+      "backoff_schedule": "0.2s, 0.4s, 0.8s",
+      "agent_action_taken": "PAUSE_DECISIONS",
+      "details_json": "{\"ollama_host\": \"http://127.0.0.1:11434\", \"last_error\": \"<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>\"}",
+      "created_at": "2026-11-19T14:31:16Z",
+      "details": {
+        "ollama_host": "http://127.0.0.1:11434",
+        "last_error": "<urlopen error [WinError 10061] No connection could be made because the target machine actively refused it>"
+      }
+    },
+    {
+      "error_id": 35,
+      "scenario_code": "STALE_DATA",
+      "severity": "HIGH",
+      "component": "PolymarketCandleValidator",
+      "message": "Dato atrasado rechazado: antigüedad de la última vela cerrada (985.0s) supera el máximo permitido (360s). Se pausan nuevas decisiones.",
+      "retries_attempted": 1,
+      "backoff_schedule": "0.2s (Validación determinista de frescura)",
+      "agent_action_taken": "PAUSE_DECISIONS",
+      "details_json": "{\"data_age_sec\": 985.0, \"max_data_age_sec\": 360.0}",
+      "created_at": "2026-11-19T14:31:09Z",
+      "details": {
+        "data_age_sec": 985.0,
+        "max_data_age_sec": 360.0
+      }
+    },
+    {
+      "error_id": 34,
+      "scenario_code": "API_TIMEOUT_OR_RATE_LIMIT",
+      "severity": "CRITICAL",
+      "component": "PolymarketMarketDataClient",
+      "message": "API de Polymarket/CLOB sin respuesta o con límite de solicitudes (HTTP 429) tras 3 reintentos con espera creciente (0.2s, 0.4s, 0.8s). Se pausan nuevas decisiones.",
+      "retries_attempted": 3,
+      "backoff_schedule": "0.2s, 0.4s, 0.8s",
+      "agent_action_taken": "PAUSE_DECISIONS",
+      "details_json": "{\"symbol\": \"POLY-BTC-5M\", \"http_status\": 429}",
+      "created_at": "2026-11-19T14:31:09Z",
+      "details": {
+        "symbol": "POLY-BTC-5M",
+        "http_status": 429
+      }
+    },
+    {
+      "error_id": 33,
+      "scenario_code": "DUPLICATE_EVENT",
+      "severity": "WARNING",
+      "component": "DeterministicRiskEngine",
+      "message": "Evento duplicado bloqueado: la vela cerrada 1795096800 (LIVE) ya fue procesada.",
+      "retries_attempted": 0,
+      "backoff_schedule": "",
+      "agent_action_taken": "BLOCK_DUPLICATE_CANDLE",
+      "details_json": "{\"mode\": \"LIVE\", \"symbol\": \"POLY-BTC-5M\", \"candle_timestamp\": 1795096800}",
+      "created_at": "2026-11-19T14:08:45Z",
+      "details": {
+        "mode": "LIVE",
+        "symbol": "POLY-BTC-5M",
+        "candle_timestamp": 1795096800
       }
     }
   ]
