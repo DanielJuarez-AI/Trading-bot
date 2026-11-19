@@ -1,6 +1,6 @@
-# 🤖 Laya Polymarket AI Financial Agent — Proyecto Final (`v1.0.0`)
+# 🤖 Laya Polymarket AI Financial Agent — Proyecto Final (`v1.1.0`)
 
-![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.0.0_Proyecto_Final-10b981?style=for-the-badge)
+![Versión](https://img.shields.io/badge/Versi%C3%B3n-v1.1.0_Polymarket_60FPS-10b981?style=for-the-badge)
 ![UI](https://img.shields.io/badge/UI-React_18_%2B_TypeScript_%7C_Vue_3-38bdf8?style=for-the-badge)
 ![LLM](https://img.shields.io/badge/Ollama_Local-Gateway_Privado_Autenticado-a855f7?style=for-the-badge)
 ![Mercado](https://img.shields.io/badge/Mercado-Polymarket_CLOB_5m_(Paper_$50k_USDC)-f59e0b?style=for-the-badge)

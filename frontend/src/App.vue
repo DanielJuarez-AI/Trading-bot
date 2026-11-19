@@ -5,7 +5,7 @@
       <div class="brand">
         <div class="btc-badge">&#8383;</div>
         <div>
-          <h1>BTC Up or Down 5m &bull; Polymarket &amp; MEXC Live vs. Modelo Laya AI (Local)</h1>
+          <h1>BTC Up or Down 5m &bull; Polymarket &amp; MEXC Live vs. Modelo Laya AI <span style="font-size: 0.72rem; background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.38); border-radius: 999px; padding: 2px 8px; vertical-align: middle; margin-left: 6px; font-weight: 700;">v1.1.0</span></h1>
           <p>{{ windowSubtitle }}</p>
         </div>
       </div>
@@ -59,32 +59,220 @@
       </div>
     </header>
 
-    <!-- SECCIÓN 1: TERMINAL DE APUESTAS EN VIVO -->
-    <LiveBetTerminal
-      :latency-text="latencyText"
-      :helper-notice="helperNotice"
-      :active-bet="activeVirtualBet"
-      :auto-bet="autoBet"
-      :laya-trend="layaTrend"
-      :laya-confidence="layaConfidence"
-      :selected-direction="selectedDirection"
-      :up-cents="currentUpCents"
-      :down-cents="currentDownCents"
-      :virtual-bankroll="virtualBankroll"
-      :live-spot-price="liveSpotPrice"
-      :price-to-beat="priceToBeat"
-      :session-wins="sessionWins"
-      :session-losses="sessionLosses"
-      @open-bet="openVirtualBet"
-      @toggle-auto="autoBet = $event"
-      @cashout="settleVirtualBet(true)"
-      @reset-bankroll="resetBankroll"
-      @select-direction="selectedDirection = $event"
-    >
-      <template #equity-chart>
-        <canvas ref="equityChartCanvas"></canvas>
-      </template>
-    </LiveBetTerminal>
+    <!-- WORKSTATION POLYMARKET: GRÁFICA EXACTA + TRAZO LAYA (IZQ) & COLUMNA UP/DOWN (DER) -->
+    <section class="poly-workstation-grid">
+      <div class="poly-chart-card" :class="polyThemeMode === 'light' ? 'poly-light' : 'poly-dark'">
+        <div>
+          <div class="poly-header-exact">
+            <div class="poly-prices-strip">
+              <div>
+                <span class="poly-metric-lbl">Price To Beat</span>
+                <span class="poly-beat-val">{{ fmtUsd(priceToBeat) }}</span>
+              </div>
+              <div class="poly-v-divider"></div>
+              <div>
+                <span class="poly-metric-lbl" style="color: #f59e0b">
+                  Current Price
+                  <span :style="{ color: liveSpotPrice - priceToBeat >= 0 ? '#16a34a' : '#dc2626', fontWeight: 800 }">
+                    {{ liveSpotPrice - priceToBeat >= 0 ? '▲' : '▼' }} ${{ Math.abs(liveSpotPrice - priceToBeat).toFixed(0) }}
+                  </span>
+                </span>
+                <span class="poly-current-val">{{ fmtUsd(liveSpotPrice) }}</span>
+              </div>
+              <div class="poly-v-divider"></div>
+              <div>
+                <span class="poly-metric-lbl" style="color: #9333ea">
+                  Trazo Laya (+15s)
+                  <span style="font-weight: 800">
+                    {{ layaPredictedPrice - liveSpotPrice >= 0 ? '+' : '' }}${{ (layaPredictedPrice - liveSpotPrice).toFixed(2) }}
+                  </span>
+                </span>
+                <span class="poly-laya-val">{{ fmtUsd(layaPredictedPrice) }}</span>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap">
+              <div class="countdown-red">
+                <div>
+                  <span class="cd-num">{{ timerMins }}</span>
+                  <span class="cd-lbl">MINS</span>
+                </div>
+                <div>
+                  <span class="cd-num">{{ timerSecs }}</span>
+                  <span class="cd-lbl">SECS</span>
+                </div>
+                <div>
+                  <span class="cd-num" style="font-size: 1.1rem; color: #0284c7">{{ timerMs }}</span>
+                  <span class="cd-lbl">MS</span>
+                </div>
+              </div>
+              <div style="font-size: 1.15rem; font-weight: 800; color: #94a3b8">&#9671; Polymarket</div>
+              <button
+                style="font-size: 0.7rem; padding: 4px 9px; border-radius: 7px"
+                @click="togglePolyTheme"
+              >
+                {{ polyThemeMode === 'light' ? '🌙 Oscuro' : '☀️ Claro Polymarket' }}
+              </button>
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.74rem; color: #64748b">
+            <span style="font-weight: 700">BTC Up or Down 5m &bull; Gráfica Real Polymarket + Superposición de Modelo Laya</span>
+            <div class="legend-tags">
+              <span><i class="dot" style="background: #f59e0b"></i>Precio Real</span>
+              <span><i class="dot" style="background: #a855f7"></i>Trazo Laya (+15s)</span>
+              <span><i class="dot" style="background: #94a3b8"></i>Target</span>
+            </div>
+          </div>
+        </div>
+
+        <figure
+          class="polymarket-embed"
+          id="polymarket-btc-updown-5m-1795098300"
+          aria-label="Polymarket prediction market: Bitcoin Up or Down - November 19, 9:25AM-9:30AM ET"
+          itemscope
+          itemtype="https://schema.org/WebPage"
+          style="position: relative; display: block; width: 100%; margin: 0"
+        >
+          <a
+            :href="`https://polymarket.com/event/${activePolySlug || 'btc-updown-5m-1795098300'}`"
+            aria-label="View on Polymarket"
+            target="_blank"
+            rel="noopener"
+            style="position: absolute; top: 4px; right: 12px; width: 120px; height: 24px; z-index: 10"
+          ></a>
+          <div class="poly-canvas-wrap">
+            <div class="poly-source-pill">Source: Polymarket.com</div>
+            <canvas ref="overlayChartCanvas"></canvas>
+          </div>
+          <figcaption
+            style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0"
+          >
+            <strong>Bitcoin Up or Down - November 19, 9:25AM-9:30AM ET</strong><br />
+            Up {{ currentUpCents }}% &middot; Down {{ currentDownCents }}%<br />
+            <a :href="`https://polymarket.com/event/${activePolySlug || 'btc-updown-5m-1795098300'}`">
+              View full market &amp; trade on Polymarket
+            </a>
+          </figcaption>
+        </figure>
+      </div>
+
+      <LiveBetTerminal
+        class="poly-right-col"
+        :latency-text="latencyText"
+        :helper-notice="helperNotice"
+        :active-bet="activeVirtualBet"
+        :auto-bet="autoBet"
+        :laya-trend="layaTrend"
+        :laya-confidence="layaConfidence"
+        :selected-direction="selectedDirection"
+        :up-cents="currentUpCents"
+        :down-cents="currentDownCents"
+        :virtual-bankroll="virtualBankroll"
+        :live-spot-price="liveSpotPrice"
+        :price-to-beat="priceToBeat"
+        :session-wins="sessionWins"
+        :session-losses="sessionLosses"
+        :point1-model-conf-pct="point1ModelConfPct"
+        :point2-risk-conf-pct="point2RiskConfPct"
+        :dual85-passed="dual85Passed"
+        :last-minute-locked="isLastMinuteLocked"
+        :remaining-window-sec="remainingWindowSec"
+        @open-bet="openVirtualBet"
+        @toggle-auto="autoBet = $event"
+        @cashout="settleVirtualBet(true)"
+        @reset-bankroll="resetBankroll"
+        @select-direction="selectedDirection = $event"
+      >
+        <template #equity-chart>
+          <canvas ref="equityChartCanvas"></canvas>
+        </template>
+      </LiveBetTerminal>
+    </section>
+
+    <!-- BARRAS DE CONFIABILIDAD (CONFIANZA OPERATIVA DEL MODELO) + GRÁFICA COMPRADORES VS VENDEDORES -->
+    <section class="poly-below-analytics-grid">
+      <div class="chart-card">
+        <div class="chart-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <h2>🎯 Confianza del Modelo para Ejecutar la Operación (Umbral &gt;85%)</h2>
+          <span
+            id="barExecSideTag"
+            :class="['conf-pill', !isLastMinuteLocked && Math.min(point1ModelConfPct, point2RiskConfPct) > 85 ? 'pass' : '']"
+          >
+            {{ layaTrend === 'UP' ? '▲ COMPRA UP' : '▼ COMPRA DOWN' }} &bull;
+            {{
+              isLastMinuteLocked
+                ? '🔒 Bloqueado <60s'
+                : Math.min(point1ModelConfPct, point2RiskConfPct) > 85
+                  ? '🚀 LISTO PARA EJECUTAR (>85%)'
+                  : '⏳ Esperando >85%'
+            }}
+          </span>
+        </div>
+        <div class="reliability-list">
+          <div class="reliability-bar-item">
+            <div class="reliability-head">
+              <span>Punto 1 &mdash; Confianza Direccional para Operar</span>
+              <span style="color: #c084fc">{{ point1ModelConfPct.toFixed(1) }}%</span>
+            </div>
+            <div class="reliability-track">
+              <span class="threshold-85-tag">85%</span>
+              <div class="threshold-85-marker"></div>
+              <div class="reliability-fill" :style="{ width: `${Math.min(100, point1ModelConfPct)}%`, background: point1ModelConfPct > 85 ? '#10b981' : '#a855f7' }"></div>
+            </div>
+          </div>
+
+          <div class="reliability-bar-item">
+            <div class="reliability-head">
+              <span>Punto 2 &mdash; Viabilidad Determinista &amp; Kelly (0.25&times;)</span>
+              <span style="color: #38bdf8">{{ point2RiskConfPct.toFixed(1) }}%</span>
+            </div>
+            <div class="reliability-track">
+              <span class="threshold-85-tag">85%</span>
+              <div class="threshold-85-marker"></div>
+              <div class="reliability-fill" :style="{ width: `${Math.min(100, point2RiskConfPct)}%`, background: point2RiskConfPct > 85 ? '#10b981' : '#38bdf8' }"></div>
+            </div>
+          </div>
+
+          <div class="reliability-bar-item">
+            <div class="reliability-head">
+              <span>Confianza Conjunta para Ejecutar la Orden (Mín. P1 &amp; P2 &bull; RL {{ lastSyncCalibPct.toFixed(1) }}%)</span>
+              <span :style="{ color: Math.min(point1ModelConfPct, point2RiskConfPct) > 85 ? '#10b981' : '#f59e0b' }">
+                {{ Math.min(point1ModelConfPct, point2RiskConfPct).toFixed(1) }}%
+              </span>
+            </div>
+            <div class="reliability-track">
+              <span class="threshold-85-tag">85%</span>
+              <div class="threshold-85-marker"></div>
+              <div
+                class="reliability-fill"
+                :style="{
+                  width: `${Math.min(100, Math.min(point1ModelConfPct, point2RiskConfPct))}%`,
+                  background: Math.min(point1ModelConfPct, point2RiskConfPct) > 85 ? '#10b981' : '#f59e0b',
+                }"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <h2>⚖️ Presión del Mercado: % Compradores vs. % Vendedores</h2>
+        </div>
+        <div class="tug-of-war-head">
+          <span style="color: #10b981">▲ Compradores: {{ currentBuyersPct.toFixed(1) }}%</span>
+          <span style="color: #ef4444">▼ Vendedores: {{ currentSellersPct.toFixed(1) }}%</span>
+        </div>
+        <div class="tug-of-war-track">
+          <div class="tug-buyers-fill" :style="{ width: `${currentBuyersPct}%` }"></div>
+          <div class="tug-sellers-fill" :style="{ width: `${currentSellersPct}%` }"></div>
+        </div>
+        <div style="position: relative; height: 185px; width: 100%">
+          <canvas ref="buyersSellersChartCanvas"></canvas>
+        </div>
+      </div>
+    </section>
 
     <!-- SECCIÓN 2: TARJETAS KPI -->
     <section class="kpi-grid">
@@ -132,58 +320,8 @@
       </div>
     </section>
 
-    <!-- SECCIÓN 3: GRÁFICA PRINCIPAL ESTILO POLYMARKET + SUPERPOSICIÓN LAYA -->
+    <!-- SECCIÓN 3: GRÁFICAS SECUNDARIAS -->
     <section class="charts-container">
-      <div class="chart-card">
-        <div class="poly-overlay-bar">
-          <div class="poly-prices-left">
-            <div>
-              <span class="p-label">Price To Beat</span>
-              <span class="p-beat">{{ fmtUsd(priceToBeat) }}</span>
-            </div>
-            <div>
-              <span class="p-label" style="color: var(--btc-orange)">Current Price (Polymarket / MEXC)</span>
-              <span class="p-current">{{ fmtUsd(liveSpotPrice) }}</span>
-            </div>
-            <div>
-              <span class="p-label" style="color: var(--laya-purple)">Predicción Superpuesta Laya (+15s)</span>
-              <span class="p-laya">{{ fmtUsd(layaPredictedPrice) }}</span>
-            </div>
-          </div>
-
-          <div class="poly-timer-box">
-            <div class="countdown-red">
-              <div>
-                <span class="cd-num">{{ timerMins }}</span>
-                <span class="cd-lbl">MINS</span>
-              </div>
-              <div>
-                <span class="cd-num">{{ timerSecs }}</span>
-                <span class="cd-lbl">SECS</span>
-              </div>
-              <div>
-                <span class="cd-num" style="font-size: 1.15rem; color: #38bdf8">{{ timerMs }}</span>
-                <span class="cd-lbl">MS (1ms)</span>
-              </div>
-            </div>
-            <div style="font-size: 1.15rem; font-weight: 800; color: #64748b">&#9671; Polymarket &bull; MEXC</div>
-          </div>
-        </div>
-
-        <div class="chart-header">
-          <h2>1. Gráfica en Tiempo Real (`BTC Up or Down 5m`) + Superposición de Predicción y Tendencia de Laya</h2>
-          <div class="legend-tags">
-            <span><i class="dot" style="background: var(--btc-orange)"></i>Precio Real (Tick a Tick)</span>
-            <span><i class="dot" style="background: var(--laya-purple)"></i>Predicción Modelo Laya (Superpuesta)</span>
-            <span><i class="dot" style="background: #94a3b8"></i>Price To Beat (Meta 5m)</span>
-          </div>
-        </div>
-
-        <div class="canvas-wrap">
-          <canvas ref="overlayChartCanvas"></canvas>
-        </div>
-      </div>
-
       <div class="charts-row-2">
         <div class="chart-card">
           <div class="chart-header">
@@ -300,6 +438,13 @@ const layaBoolean = ref<boolean>(true);
 const currentUpCents = ref<number>(54);
 const currentDownCents = ref<number>(47);
 const selectedDirection = ref<TrendDirection>('UP');
+const lastSyncCalibPct = ref<number>(91.13);
+const point1ModelConfPct = ref<number>(0.0);
+const point2RiskConfPct = ref<number>(0.0);
+const dual85Passed = ref<boolean>(false);
+const isLastMinuteLocked = ref<boolean>(false);
+const remainingWindowSec = ref<number>(300);
+let autoOperatedWindowBucket = 0;
 
 const virtualBankroll = ref<number>(1000.0);
 const activeVirtualBet = ref<ActiveVirtualBet | null>(null);
@@ -328,19 +473,56 @@ const overlayChartCanvas = ref<HTMLCanvasElement | null>(null);
 const diffChartCanvas = ref<HTMLCanvasElement | null>(null);
 const rlChartCanvas = ref<HTMLCanvasElement | null>(null);
 const equityChartCanvas = ref<HTMLCanvasElement | null>(null);
+const buyersSellersChartCanvas = ref<HTMLCanvasElement | null>(null);
 
 let overlayChartInstance: Chart | null = null;
 let diffChartInstance: Chart | null = null;
 let rlChartInstance: Chart | null = null;
 let equityChartInstance: Chart | null = null;
+let buyersSellersChartInstance: Chart | null = null;
+
+const polyThemeMode = ref<'light' | 'dark'>('light');
+const currentBuyersPct = ref<number>(50.0);
+const currentSellersPct = ref<number>(50.0);
+let lastSyncBuyersPct = 50.0;
 
 const MAX_POINTS = 60;
 let tickLabels: string[] = [];
 let tickRealPrices: number[] = [];
 let tickLayaPrices: number[] = [];
 let tickDiffs: number[] = [];
+let tickBuyersPct: number[] = [];
+let tickSellersPct: number[] = [];
 let lastChartPushMs = 0;
 let lastRenderFrameMs = 0;
+
+interface FluidPoint {
+  ts: number;
+  real: number;
+  laya: number;
+}
+const FLUID_WINDOW_MS = 22000;
+const FLUID_LEAD_MS = 3200;
+const FLUID_SAMPLE_MS = 75;
+let fluidPoints: FluidPoint[] = [];
+let stage1Spot = 0;
+let stage1Laya = 0;
+let displaySpotPrice = 0;
+let displayLayaPrice = 0;
+let smoothYMin = 0;
+let smoothYMax = 0;
+let lastFluidSampleMs = 0;
+let chartHoverX: number | null = null;
+let chartHoverY: number | null = null;
+
+function togglePolyTheme() {
+  polyThemeMode.value = polyThemeMode.value === 'light' ? 'dark' : 'light';
+  if (overlayChartInstance) {
+    overlayChartInstance.destroy();
+    overlayChartInstance = null;
+  }
+  renderRealtimeCharts();
+}
 
 function npClip(v: number, minV: number, maxV: number): number {
   return Math.max(minV, Math.min(maxV, v));
@@ -440,10 +622,24 @@ async function initInitialPriceHistory() {
     tickRealPrices = [];
     tickLayaPrices = [];
     tickDiffs = [];
+    tickBuyersPct = [];
+    tickSellersPct = [];
+    fluidPoints = [];
 
-    for (let i = 0; i < k1s.length; i++) {
+    const nowFluidMs = feedManager.getAtomicNowMs();
+    const kLen = k1s.length;
+    const startIdx = Math.max(0, kLen - 28);
+    const rawCloses = k1s.map((row: any) => +(parseFloat(row[4]) + basisOffset).toFixed(2));
+    const smoothCloses = rawCloses.map((val: number, idx: number) => {
+      const a = rawCloses[Math.max(0, idx - 1)];
+      const b = val;
+      const c = rawCloses[Math.min(rawCloses.length - 1, idx + 1)];
+      return +((a + b * 2.0 + c) / 4.0).toFixed(2);
+    });
+
+    for (let i = 0; i < kLen; i++) {
       const ts = k1s[i][0];
-      const p = +(parseFloat(k1s[i][4]) + basisOffset).toFixed(2);
+      const p = smoothCloses[i];
       const lbl = new Date(ts).toLocaleTimeString('en-US', {
         hour12: true,
         hour: 'numeric',
@@ -455,14 +651,51 @@ async function initInitialPriceHistory() {
 
       const prevP = i > 0 ? tickRealPrices[i - 1] : p;
       const prevPrevP = i > 3 ? tickRealPrices[i - 4] : prevP;
-      const mom = (p - prevPrevP) * 1.45 + (p - priceToBeat.value) * 0.18;
+      const mom = npClip((p - prevPrevP) * 0.45 + npClip(p - priceToBeat.value, -18.0, 18.0) * 0.06, -7.5, 7.5);
       const predP = +(p + mom).toFixed(2);
       tickLayaPrices.push(predP);
       tickDiffs.push(+(predP - p).toFixed(2));
+
+      const kVol = parseFloat(k1s[i][5] || '1');
+      const kTakerBuy = parseFloat(k1s[i][9] || String(kVol * 0.5));
+      const bPct = +npClip((kTakerBuy / Math.max(1e-8, kVol)) * 100.0, 5.0, 95.0).toFixed(1);
+      tickBuyersPct.push(bPct);
+      tickSellersPct.push(+(100.0 - bPct).toFixed(1));
+
+      if (i >= startIdx) {
+        const relTs = nowFluidMs - (kLen - 1 - i) * 1000;
+        if (i > startIdx) {
+          const p0 = tickRealPrices[i - 1];
+          const l0 = p0 + npClip(tickLayaPrices[i - 1] - p0, -7.5, 7.5);
+          const l1 = p + npClip(predP - p, -7.5, 7.5);
+          const t0 = relTs - 1000;
+          for (let s = 1; s <= 12; s++) {
+            const f = s / 12.0;
+            const ease = f * f * (3.0 - 2.0 * f);
+            const tsPt = t0 + f * 1000;
+            const wave = Math.sin(tsPt * 0.0082) * 0.22;
+            fluidPoints.push({
+              ts: tsPt,
+              real: +(p0 + (p - p0) * ease + wave).toFixed(2),
+              laya: +(l0 + (l1 - l0) * ease + wave * 0.6).toFixed(2),
+            });
+          }
+        } else {
+          fluidPoints.push({ ts: relTs, real: p, laya: +(p + npClip(predP - p, -7.5, 7.5)).toFixed(2) });
+        }
+      }
     }
 
     liveSpotPrice.value = tickRealPrices[tickRealPrices.length - 1];
+    stage1Spot = liveSpotPrice.value;
+    displaySpotPrice = liveSpotPrice.value;
     recomputeLayaRealtime();
+    stage1Laya = layaPredictedPrice.value || liveSpotPrice.value;
+    displayLayaPrice = stage1Laya;
+    smoothYMin = 0;
+    smoothYMax = 0;
+    lastFluidSampleMs = nowFluidMs;
+
     renderRealtimeCharts();
     renderEquityChart();
   } catch (e) {
@@ -473,12 +706,21 @@ async function initInitialPriceHistory() {
 function onNewRealtimeTick(price: number, sourceTag: string) {
   if (isNaN(price) || price <= 0) return;
   const nowPerf = performance.now();
+  if (liveSpotPrice.value > 1000 && Math.abs(price - liveSpotPrice.value) > 18.0) {
+    const jumpDelta = price - liveSpotPrice.value;
+    if (sourceTag === 'POLY-1MS') {
+      feedManager.chainlinkBasisOffset += jumpDelta * 0.15;
+    }
+    price = liveSpotPrice.value + npClip(jumpDelta, -1.8, 1.8);
+  }
   liveSpotPrice.value = +price.toFixed(2);
   const atomicNowMs = feedManager.getAtomicNowMs();
 
   const bucket = Math.floor((atomicNowMs + windowOffsetSec.value * 1000) / 300000);
   if (currentWindowStartBucket.value !== 0 && bucket !== currentWindowStartBucket.value) {
     currentWindowStartBucket.value = bucket;
+    autoOperatedWindowBucket = 0;
+    isLastMinuteLocked.value = false;
     if (activeVirtualBet.value) {
       settleVirtualBet(false);
     }
@@ -486,6 +728,8 @@ function onNewRealtimeTick(price: number, sourceTag: string) {
     if (!manualBeatVal.value) {
       priceToBeat.value = liveSpotPrice.value;
     }
+    helperNotice.value =
+      '🔓 <strong>Nuevo periodo de 5 minutos iniciado:</strong> Apuestas rehabilitadas automáticamente. Esperando señal dual &gt;85% (Punto 1 + Punto 2).';
     syncPolymarket5mContract();
   } else if (currentWindowStartBucket.value === 0) {
     currentWindowStartBucket.value = bucket;
@@ -506,17 +750,25 @@ function onNewRealtimeTick(price: number, sourceTag: string) {
     tickRealPrices.push(liveSpotPrice.value);
     tickLayaPrices.push(layaPredictedPrice.value);
     tickDiffs.push(+(layaPredictedPrice.value - liveSpotPrice.value).toFixed(2));
+    tickBuyersPct.push(currentBuyersPct.value);
+    tickSellersPct.push(currentSellersPct.value);
 
     if (tickLabels.length > MAX_POINTS) {
       tickLabels.shift();
       tickRealPrices.shift();
       tickLayaPrices.shift();
       tickDiffs.shift();
+      tickBuyersPct.shift();
+      tickSellersPct.shift();
     }
   } else if (tickRealPrices.length > 0) {
     tickRealPrices[tickRealPrices.length - 1] = liveSpotPrice.value;
     tickLayaPrices[tickLayaPrices.length - 1] = layaPredictedPrice.value;
     tickDiffs[tickDiffs.length - 1] = +(layaPredictedPrice.value - liveSpotPrice.value).toFixed(2);
+    if (tickBuyersPct.length > 0) {
+      tickBuyersPct[tickBuyersPct.length - 1] = currentBuyersPct.value;
+      tickSellersPct[tickSellersPct.length - 1] = currentSellersPct.value;
+    }
   }
 
   if (nowPerf - lastRenderFrameMs >= 16) {
@@ -540,9 +792,10 @@ function recomputeLayaRealtime() {
   const pNow = liveSpotPrice.value;
   const p3 = tickRealPrices[Math.max(0, n - 4)];
   const p10 = tickRealPrices[Math.max(0, n - 11)];
-  const vShort = pNow - p3;
-  const vMed = pNow - p10;
+  const vShort = npClip(pNow - p3, -10.0, 10.0);
+  const vMed = npClip(pNow - p10, -16.0, 16.0);
   const distFromBeat = pNow - priceToBeat.value;
+  const distClamp = npClip(distFromBeat, -18.0, 18.0);
 
   let sumSq = 0;
   for (let i = 1; i < n; i++) {
@@ -551,9 +804,13 @@ function recomputeLayaRealtime() {
   }
   const tickStd = Math.sqrt(sumSq / n) || 2.5;
 
-  const momentumScore = 0.62 * vShort + 0.38 * vMed + 0.22 * distFromBeat;
-  const projectedDelta = npClip(momentumScore * 1.35, -tickStd * 6.5, tickStd * 6.5);
-  layaPredictedPrice.value = +(pNow + projectedDelta).toFixed(2);
+  const rawDelta = npClip(0.42 * vShort + 0.22 * vMed + 0.06 * distClamp, -8.0, 8.0);
+  const rawTargetLaya = pNow + rawDelta;
+  layaPredictedPrice.value = +(
+    layaPredictedPrice.value > 1000
+      ? 0.80 * layaPredictedPrice.value + 0.20 * rawTargetLaya
+      : rawTargetLaya
+  ).toFixed(2);
 
   layaTrend.value = layaPredictedPrice.value >= priceToBeat.value ? 'UP' : 'DOWN';
 
@@ -565,6 +822,33 @@ function recomputeLayaRealtime() {
   const probUp = npClip(0.5 + (distFromBeat / Math.max(18.0, tickStd * 5.0)) * 0.38, 0.06, 0.94);
   currentUpCents.value = Math.round(probUp * 100);
   currentDownCents.value = Math.max(1, 101 - currentUpCents.value);
+
+  // Punto 1 (Modelo Calibrado) & Punto 2 (Riesgo Determinista & Kelly)
+  point1ModelConfPct.value = +npClip(0.55 * lastSyncCalibPct.value + 0.45 * (layaConfidence.value * 100.0), 0.0, 99.5).toFixed(1);
+  const targetCents = layaTrend.value === 'UP' ? currentUpCents.value : currentDownCents.value;
+  const askProbEst = Math.min(0.98, Math.max(0.05, (targetCents + 1) / 100.0));
+  const bOdds = Math.max(0.25, (1.0 - askProbEst) / askProbEst);
+  const kellyRaw = Math.max(0.0, (layaConfidence.value * bOdds - (1.0 - layaConfidence.value)) / bOdds);
+  const marginPts = virtualBankroll.value >= 10.0 ? 30.0 : (virtualBankroll.value >= 1.0 ? 15.0 : 0.0);
+  const edgePts = kellyRaw > 0 ? Math.min(1.0, kellyRaw / 0.28) * 40.0 : 0.0;
+  point2RiskConfPct.value = +npClip(marginPts + 30.0 + edgePts, 0.0, 99.5).toFixed(1);
+  dual85Passed.value = point1ModelConfPct.value > 85.0 && point2RiskConfPct.value > 85.0;
+
+  const localMomBuyers = 50.0 + npClip(((vShort * 2.2 + vMed * 0.9) / Math.max(1.5, tickStd)) * 16.0, -32.0, 32.0);
+  currentBuyersPct.value = +npClip(0.65 * localMomBuyers + 0.35 * lastSyncBuyersPct, 5.0, 95.0).toFixed(1);
+  currentSellersPct.value = +(100.0 - currentBuyersPct.value).toFixed(1);
+
+  if (
+    !isLastMinuteLocked.value &&
+    dual85Passed.value &&
+    !activeVirtualBet.value &&
+    currentWindowStartBucket.value !== 0 &&
+    autoOperatedWindowBucket !== currentWindowStartBucket.value &&
+    virtualBankroll.value >= 1.0
+  ) {
+    autoOperatedWindowBucket = currentWindowStartBucket.value;
+    openVirtualBet('kelly');
+  }
 
   if (activeVirtualBet.value) {
     const b = activeVirtualBet.value;
@@ -585,6 +869,11 @@ function recomputeLayaRealtime() {
 
 function openVirtualBet(stakeMode: string) {
   if (!liveSpotPrice.value || liveSpotPrice.value <= 0) return;
+
+  if (isLastMinuteLocked.value || remainingWindowSec.value < 60) {
+    helperNotice.value = `<span style="color:#fca5a5;font-weight:700;">🔒 Último minuto (${remainingWindowSec.value}s restantes): las apuestas están deshabilitadas hasta que inicie el siguiente periodo de 5m.</span>`;
+    return;
+  }
 
   if (activeVirtualBet.value && stakeMode === 'kelly_main_btn') {
     helperNotice.value = `<span style="color:#f59e0b;font-weight:700;">⚠️ Ya tienes la apuesta ${activeVirtualBet.value.id} ($${activeVirtualBet.value.stake_usd.toFixed(2)} a ${activeVirtualBet.value.direction}) en juego. Espera al cierre del reloj (00:00) o usa "⚡ Vender Posición (Cashout CLOB)" para cerrar al precio Bid actual.</span>`;
@@ -701,7 +990,7 @@ function settleVirtualBet(isEarlyCashout = false) {
   activeVirtualBet.value = null;
   renderEquityChart();
 
-  if (!isEarlyCashout && autoBet.value) {
+  if (!isEarlyCashout && !isLastMinuteLocked.value && autoBet.value) {
     setTimeout(() => openVirtualBet('kelly'), 400);
   }
 }
@@ -725,6 +1014,32 @@ function updateCountdownClock() {
   const diffMs = Math.max(0, baseEndMs - atomicNowMs);
   const remSec = Math.floor(diffMs / 1000);
   const remMillis = Math.floor(diffMs % 1000);
+  remainingWindowSec.value = remSec;
+
+  const bucketNow = Math.floor((atomicNowMs + windowOffsetSec.value * 1000) / 300000);
+  if (currentWindowStartBucket.value !== 0 && bucketNow !== currentWindowStartBucket.value) {
+    currentWindowStartBucket.value = bucketNow;
+    autoOperatedWindowBucket = 0;
+    isLastMinuteLocked.value = false;
+    if (activeVirtualBet.value) {
+      settleVirtualBet(false);
+    }
+    officialPolyPriceToBeat.value = null;
+    if (!manualBeatVal.value) {
+      priceToBeat.value = liveSpotPrice.value || priceToBeat.value;
+    }
+    helperNotice.value =
+      '🔓 <strong>Nuevo periodo de 5 minutos iniciado:</strong> Apuestas rehabilitadas automáticamente. Esperando señal dual &gt;85% (Punto 1 + Punto 2).';
+    syncPolymarket5mContract();
+  }
+
+  const nextLock = remSec < 60;
+  if (nextLock !== isLastMinuteLocked.value) {
+    isLastMinuteLocked.value = nextLock;
+    helperNotice.value = nextLock
+      ? '🔒 <strong>Último minuto (&lt;60s) de la ventana 5m:</strong> Las apuestas han sido deshabilitadas temporalmente y se reiniciarán en cuanto empiece el siguiente periodo.'
+      : '🔓 <strong>Apuestas rehabilitadas:</strong> Nuevo periodo 5m activo (esperando Punto 1 &gt;85% y Punto 2 &gt;85%).';
+  }
 
   timerMins.value = String(Math.floor(remSec / 60)).padStart(2, '0');
   timerSecs.value = String(remSec % 60).padStart(2, '0');
@@ -745,74 +1060,463 @@ function updateCountdownClock() {
   requestAnimationFrame(updateCountdownClock);
 }
 
-function renderRealtimeCharts() {
-  if (tickLabels.length < 2 || !overlayChartCanvas.value || !diffChartCanvas.value) return;
+const polymarketExactCanvasPlugin = {
+  id: 'polymarketExactCanvasPlugin',
+  afterDatasetsDraw(chart: Chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea || !scales || !scales.y) return;
+    const yScale = scales.y;
+    const xScale = scales.x;
+    const { left, right, top, bottom } = chartArea;
+    const isLight = polyThemeMode.value === 'light';
 
-  const extLabels = [...tickLabels, '+5s', '+10s', '+15s'];
-  const extReal = [...tickRealPrices, null, null, null];
-  const stepDelta = (layaPredictedPrice.value - liveSpotPrice.value) / 3.0;
-  const extLaya = [
-    ...tickLayaPrices,
-    +(liveSpotPrice.value + stepDelta).toFixed(2),
-    +(liveSpotPrice.value + stepDelta * 2).toFixed(2),
-    layaPredictedPrice.value,
-  ];
-  const extBeat = extLabels.map(() => priceToBeat.value);
+    const drawChevronTag = (
+      yPx: number,
+      bg: string,
+      txt: string,
+      opts?: { sharpLeft?: boolean }
+    ) => {
+      ctx.save();
+      ctx.font = 'bold 10.5px Inter, sans-serif';
+      const w = ctx.measureText(txt).width + 16;
+      const h = 20;
+      const tip = opts?.sharpLeft ? 7 : 4;
+      const xStart = right - 2;
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      if (opts?.sharpLeft) {
+        ctx.moveTo(xStart, yPx);
+        ctx.lineTo(xStart + tip, yPx - h / 2);
+        ctx.lineTo(xStart + w + tip, yPx - h / 2);
+        ctx.lineTo(xStart + w + tip, yPx + h / 2);
+        ctx.lineTo(xStart + tip, yPx + h / 2);
+        ctx.closePath();
+      } else {
+        const r = 5;
+        const x0 = xStart + 4;
+        const y0 = yPx - h / 2;
+        const rw = w + 2;
+        ctx.moveTo(x0 + r, y0);
+        ctx.lineTo(x0 + rw - r, y0);
+        ctx.quadraticCurveTo(x0 + rw, y0, x0 + rw, y0 + r);
+        ctx.lineTo(x0 + rw, y0 + h - r);
+        ctx.quadraticCurveTo(x0 + rw, y0 + h, x0 + rw - r, y0 + h);
+        ctx.lineTo(x0 + r, y0 + h);
+        ctx.quadraticCurveTo(x0, y0 + h, x0, y0 + h - r);
+        ctx.lineTo(x0, y0 + r);
+        ctx.quadraticCurveTo(x0, y0, x0 + r, y0);
+        ctx.closePath();
+      }
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(txt, xStart + tip + w / 2, yPx + 0.5);
+      ctx.restore();
+    };
 
-  const ctx1 = overlayChartCanvas.value.getContext('2d');
+    const drawDashLine = (yPx: number, stroke: string) => {
+      ctx.save();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.25;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(left, yPx);
+      ctx.lineTo(right, yPx);
+      ctx.stroke();
+      ctx.restore();
+    };
+
+    // Línea punteada naranja de precio vivo
+    const spotVal = displaySpotPrice || liveSpotPrice.value;
+    if (spotVal > 0) {
+      const ySpot = Math.max(top + 6, Math.min(bottom - 6, yScale.getPixelForValue(spotVal)));
+      drawDashLine(ySpot, 'rgba(245, 158, 11, 0.55)');
+    }
+
+    // Target (Price To Beat) inteligente: Target ↑ / Target ↓ / < Target
+    const targetVal = priceToBeat.value;
+    if (targetVal > 0) {
+      if (targetVal > yScale.max) {
+        drawDashLine(top + 2, 'rgba(148, 163, 184, 0.6)');
+        drawChevronTag(top + 12, '#64748b', 'Target ↑');
+      } else if (targetVal < yScale.min) {
+        drawDashLine(bottom - 2, 'rgba(148, 163, 184, 0.6)');
+        drawChevronTag(bottom - 12, '#64748b', 'Target ↓');
+      } else {
+        const yTarget = Math.max(top + 10, Math.min(bottom - 10, yScale.getPixelForValue(targetVal)));
+        drawDashLine(yTarget, 'rgba(148, 163, 184, 0.72)');
+        drawChevronTag(yTarget, '#8b95a5', 'Target', { sharpLeft: true });
+      }
+    }
+
+    // Línea superpuesta + etiqueta Laya
+    const layaVal = displayLayaPrice || layaPredictedPrice.value;
+    if (layaVal > 0) {
+      const yLaya = Math.max(top + 10, Math.min(bottom - 10, yScale.getPixelForValue(layaVal)));
+      drawDashLine(yLaya, 'rgba(168, 85, 247, 0.35)');
+      drawChevronTag(yLaya, '#9333ea', 'Laya', { sharpLeft: true });
+    }
+
+    // Punto pulsante en la punta de la serie en vivo
+    const meta0 = chart.getDatasetMeta(0);
+    if (meta0 && meta0.data && meta0.data.length > 0) {
+      const tipPt = meta0.data[meta0.data.length - 1];
+      if (tipPt && !isNaN(tipPt.x) && !isNaN(tipPt.y)) {
+        const pulse = 0.5 + 0.5 * Math.sin(performance.now() * 0.008);
+        ctx.save();
+        ctx.fillStyle = `rgba(245, 158, 11, ${0.18 + pulse * 0.18})`;
+        ctx.beginPath();
+        ctx.arc(tipPt.x, tipPt.y, 7 + pulse * 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f59e0b';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.arc(tipPt.x, tipPt.y, 4.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Crosshair vertical y Tooltip pill estilo Polymarket al hacer hover
+    if (chartHoverX !== null && chartHoverX >= left && chartHoverX <= right && xScale) {
+      const hoverTs = xScale.getValueForPixel(chartHoverX);
+      const ds0 = (chart.data.datasets[0]?.data || []) as Array<{ x: number; y: number }>;
+      const ds1 = (chart.data.datasets[1]?.data || []) as Array<{ x: number; y: number }>;
+      let nearSpot: { x: number; y: number } | null = null;
+      let minDist = Infinity;
+      for (let i = 0; i < ds0.length; i++) {
+        const d = Math.abs(ds0[i].x - hoverTs);
+        if (d < minDist) {
+          minDist = d;
+          nearSpot = ds0[i];
+        }
+      }
+      let nearLaya: { x: number; y: number } | null = null;
+      let minDistL = Infinity;
+      for (let i = 0; i < ds1.length; i++) {
+        const d = Math.abs(ds1[i].x - hoverTs);
+        if (d < minDistL) {
+          minDistL = d;
+          nearLaya = ds1[i];
+        }
+      }
+
+      if (nearSpot) {
+        const pxX = xScale.getPixelForValue(nearSpot.x);
+        const pxY = yScale.getPixelForValue(nearSpot.y);
+
+        ctx.save();
+        ctx.strokeStyle = isLight ? 'rgba(100, 116, 139, 0.35)' : 'rgba(148, 163, 184, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pxX, top);
+        ctx.lineTo(pxX, bottom);
+        ctx.stroke();
+
+        ctx.fillStyle = '#f59e0b';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(pxX, pxY, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        const priceLine = `$${Number(nearSpot.y).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        const layaLine = nearLaya
+          ? `Laya: $${Number(nearLaya.y).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : '';
+        const dtStr = new Date(nearSpot.x).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+        });
+
+        ctx.font = 'bold 12px Inter, sans-serif';
+        const w1 = ctx.measureText(priceLine).width + 20;
+        ctx.font = '600 11px Inter, sans-serif';
+        const w2 = layaLine ? ctx.measureText(layaLine).width + 16 : 0;
+        const w3 = ctx.measureText(dtStr).width + 16;
+        const boxW = Math.max(w1, w2, w3, 152);
+        const boxH = layaLine ? 60 : 44;
+        let boxX = pxX + 12;
+        if (boxX + boxW > right) boxX = pxX - boxW - 12;
+        boxX = Math.max(left + 4, boxX);
+        const boxY = Math.max(top + 6, Math.min(bottom - boxH - 6, pxY - boxH / 2));
+
+        ctx.fillStyle = isLight ? 'rgba(255, 255, 255, 0.96)' : 'rgba(15, 23, 42, 0.95)';
+        ctx.strokeStyle = isLight ? 'rgba(203, 213, 225, 0.95)' : 'rgba(51, 65, 85, 0.95)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(boxX, boxY, boxW, boxH, 8);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(boxX + 12, boxY + 15, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = isLight ? '#0f172a' : '#f8fafc';
+        ctx.font = 'bold 12px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(priceLine, boxX + 21, boxY + 15);
+
+        if (layaLine) {
+          ctx.fillStyle = isLight ? '#7e22ce' : '#c084fc';
+          ctx.font = '600 11px Inter, sans-serif';
+          ctx.fillText(layaLine, boxX + 10, boxY + 32);
+        }
+
+        ctx.fillStyle = isLight ? '#64748b' : '#94a3b8';
+        ctx.font = '600 10.5px Inter, sans-serif';
+        ctx.fillText(dtStr, boxX + 10, boxY + (layaLine ? 48 : 32));
+        ctx.restore();
+      }
+    }
+  },
+};
+
+function renderFluidOverlay60FPS() {
+  const overlayEl = overlayChartCanvas.value;
+  if (!overlayEl || !liveSpotPrice.value) {
+    requestAnimationFrame(renderFluidOverlay60FPS);
+    return;
+  }
+
+  const nowMs = feedManager.getAtomicNowMs();
+  if (!stage1Spot) stage1Spot = liveSpotPrice.value;
+  if (!displaySpotPrice) displaySpotPrice = liveSpotPrice.value;
+  if (!stage1Laya) stage1Laya = layaPredictedPrice.value || liveSpotPrice.value;
+  if (!displayLayaPrice) displayLayaPrice = layaPredictedPrice.value || liveSpotPrice.value;
+
+  const microWave = Math.sin(nowMs * 0.0082) * 0.20 + Math.cos(nowMs * 0.0051) * 0.11;
+  stage1Spot += (liveSpotPrice.value - stage1Spot) * 0.18;
+  displaySpotPrice += (stage1Spot + microWave - displaySpotPrice) * 0.16;
+
+  const targetLaya = layaPredictedPrice.value || liveSpotPrice.value;
+  stage1Laya += (targetLaya - stage1Laya) * 0.15;
+  displayLayaPrice += (stage1Laya + microWave * 0.55 - displayLayaPrice) * 0.14;
+
+  if (nowMs - lastFluidSampleMs >= FLUID_SAMPLE_MS) {
+    lastFluidSampleMs = nowMs;
+    fluidPoints.push({
+      ts: nowMs,
+      real: +displaySpotPrice.toFixed(2),
+      laya: +displayLayaPrice.toFixed(2),
+    });
+    const cutoff = nowMs - FLUID_WINDOW_MS - 8000;
+    while (fluidPoints.length > 10 && fluidPoints[0].ts < cutoff) {
+      fluidPoints.shift();
+    }
+  }
+
+  const xMin = nowMs - FLUID_WINDOW_MS;
+  const xMax = nowMs + FLUID_LEAD_MS;
+
+  const realData = fluidPoints.map((p) => ({ x: p.ts, y: p.real }));
+  realData.push({ x: nowMs, y: +displaySpotPrice.toFixed(2) });
+
+  const stepDelta = (displayLayaPrice - displaySpotPrice) / 3.0;
+  const layaData = fluidPoints.map((p) => ({ x: p.ts, y: p.laya }));
+  layaData.push({ x: nowMs, y: +displayLayaPrice.toFixed(2) });
+  layaData.push({ x: nowMs + 1000, y: +(displaySpotPrice + stepDelta).toFixed(2) });
+  layaData.push({ x: nowMs + 2000, y: +(displaySpotPrice + stepDelta * 2).toFixed(2) });
+  layaData.push({ x: nowMs + 3000, y: +displayLayaPrice.toFixed(2) });
+
+  let rMin = Infinity;
+  let rMax = -Infinity;
+  for (let i = 0; i < realData.length; i++) {
+    if (realData[i].x >= xMin) {
+      if (realData[i].y < rMin) rMin = realData[i].y;
+      if (realData[i].y > rMax) rMax = realData[i].y;
+    }
+  }
+  if (!isFinite(rMin) || !isFinite(rMax)) {
+    rMin = displaySpotPrice - 12;
+    rMax = displaySpotPrice + 12;
+  }
+  let vMin = rMin;
+  let vMax = rMax;
+  for (let i = 0; i < layaData.length; i++) {
+    if (layaData[i].x >= xMin) {
+      const ly = Math.max(rMin - 9.0, Math.min(rMax + 9.0, layaData[i].y));
+      if (ly < vMin) vMin = ly;
+      if (ly > vMax) vMax = ly;
+    }
+  }
+  if (priceToBeat.value > 0 && Math.abs(priceToBeat.value - displaySpotPrice) <= 22.0) {
+    if (priceToBeat.value < vMin) vMin = priceToBeat.value;
+    if (priceToBeat.value > vMax) vMax = priceToBeat.value;
+  }
+
+  const rawSpan = Math.max(28.0, Math.min(65.0, vMax - vMin));
+  const pad = Math.max(7.0, rawSpan * 0.28);
+  const targetYMin = vMin - pad;
+  const targetYMax = vMax + pad;
+  if (!smoothYMin || !smoothYMax) {
+    smoothYMin = targetYMin;
+    smoothYMax = targetYMax;
+  } else {
+    smoothYMin += (targetYMin - smoothYMin) * 0.12;
+    smoothYMax += (targetYMax - smoothYMax) * 0.12;
+  }
+  const yStep = smoothYMax - smoothYMin <= 80 ? 10 : 20;
+
+  const isLight = polyThemeMode.value === 'light';
+  const gridColor = isLight ? 'rgba(148, 163, 184, 0.22)' : 'rgba(255, 255, 255, 0.06)';
+  const tickColor = isLight ? '#64748b' : '#94a3b8';
+  const ctx1 = overlayEl.getContext('2d');
+
   if (ctx1) {
     if (!overlayChartInstance) {
-      const grad = ctx1.createLinearGradient(0, 0, 0, 320);
-      grad.addColorStop(0, 'rgba(247, 147, 26, 0.22)');
-      grad.addColorStop(1, 'rgba(247, 147, 26, 0.0)');
+      const grad = ctx1.createLinearGradient(0, 0, 0, 340);
+      grad.addColorStop(0, isLight ? 'rgba(245, 158, 11, 0.14)' : 'rgba(247, 147, 26, 0.22)');
+      grad.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
 
       overlayChartInstance = new Chart(ctx1, {
         type: 'line',
         data: {
-          labels: extLabels,
           datasets: [
             {
-              label: 'Polymarket / MEXC BTC Live ($)',
-              data: extReal,
-              borderColor: '#f7931a',
+              label: 'Polymarket BTC Live ($)',
+              data: realData as any,
+              borderColor: '#f59e0b',
               backgroundColor: grad,
               fill: true,
-              borderWidth: 2.8,
-              tension: 0.28,
+              borderWidth: 2.5,
+              cubicInterpolationMode: 'monotone',
+              tension: 0.4,
+              pointRadius: 0,
             },
             {
-              label: 'Predicción Modelo Laya ($)',
-              data: extLaya,
+              label: 'Trazo Modelo Laya ($)',
+              data: layaData as any,
               borderColor: '#a855f7',
               backgroundColor: 'transparent',
-              borderWidth: 2.4,
+              borderWidth: 2.0,
               borderDash: [5, 4],
-              tension: 0.28,
-            },
-            {
-              label: 'Price To Beat ($)',
-              data: extBeat,
-              borderColor: 'rgba(148, 163, 184, 0.45)',
-              borderWidth: 1.4,
-              borderDash: [4, 4],
-              pointRadius: 0,
-              fill: false,
+              cubicInterpolationMode: 'monotone',
+              tension: 0.4,
+              pointRadius: (c: any) => (c.dataIndex === layaData.length - 1 ? 4.5 : 0),
+              pointBackgroundColor: '#a855f7',
+              pointBorderColor: '#ffffff',
+              pointBorderWidth: 1.5,
             },
           ],
         },
+        plugins: [polymarketExactCanvasPlugin],
         options: {
           animation: false,
+          parsing: false,
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          layout: { padding: { right: 64, top: 10, bottom: 6 } },
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: {
+            x: {
+              type: 'linear',
+              min: xMin,
+              max: xMax,
+              grid: { display: false },
+              border: { display: false },
+              afterBuildTicks(axis: any) {
+                const ticks: Array<{ value: number }> = [];
+                const step = 4000;
+                const first = Math.ceil((axis.min + 3600) / step) * step;
+                for (let t = first; t <= axis.max - 1500; t += step) {
+                  ticks.push({ value: t });
+                }
+                axis.ticks = ticks;
+              },
+              ticks: {
+                color: tickColor,
+                font: { size: 11, weight: 'bold' },
+                callback: (val: any) =>
+                  new Date(Number(val)).toLocaleTimeString('en-US', {
+                    hour12: true,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit',
+                  }),
+              },
+            },
+            y: {
+              position: 'right',
+              min: smoothYMin,
+              max: smoothYMax,
+              grid: { color: gridColor },
+              border: { display: false },
+              ticks: {
+                color: tickColor,
+                stepSize: yStep,
+                maxTicksLimit: 6,
+                font: { size: 11, weight: 'bold' },
+                callback: (v: any) =>
+                  `$${Number(v).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+              },
+            },
+          },
         },
       });
     } else {
-      overlayChartInstance.data.labels = extLabels;
-      overlayChartInstance.data.datasets[0].data = extReal;
-      overlayChartInstance.data.datasets[1].data = extLaya;
-      overlayChartInstance.data.datasets[2].data = extBeat;
+      const scalesAny = overlayChartInstance.options.scales as any;
+      scalesAny.x.min = xMin;
+      scalesAny.x.max = xMax;
+      scalesAny.y.min = smoothYMin;
+      scalesAny.y.max = smoothYMax;
+      scalesAny.y.ticks.stepSize = yStep;
+      overlayChartInstance.data.datasets[0].data = realData as any;
+      overlayChartInstance.data.datasets[1].data = layaData as any;
       overlayChartInstance.update('none');
+    }
+  }
+
+  requestAnimationFrame(renderFluidOverlay60FPS);
+}
+
+function renderRealtimeCharts() {
+  if (tickLabels.length < 2 || !diffChartCanvas.value) return;
+
+  if (buyersSellersChartCanvas.value && tickBuyersPct.length >= 2) {
+    const ctxBS = buyersSellersChartCanvas.value.getContext('2d');
+    const eq50 = tickLabels.map(() => 50);
+    if (ctxBS) {
+      if (!buyersSellersChartInstance) {
+        buyersSellersChartInstance = new Chart(ctxBS, {
+          type: 'line',
+          data: {
+            labels: tickLabels,
+            datasets: [
+              { label: '% Compradores', data: tickBuyersPct, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.14)', fill: true, borderWidth: 2, tension: 0.28, pointRadius: 0 },
+              { label: '% Vendedores', data: tickSellersPct, borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.08)', fill: true, borderWidth: 2, tension: 0.28, pointRadius: 0 },
+              { label: 'Equilibrio 50%', data: eq50, borderColor: 'rgba(148, 163, 184, 0.45)', borderDash: [4, 4], borderWidth: 1.2, pointRadius: 0, fill: false },
+            ],
+          },
+          options: {
+            animation: false,
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { display: false },
+              y: { min: 0, max: 100, ticks: { color: '#94a3b8', stepSize: 25, callback: (v) => `${v}%` } },
+            },
+          },
+        });
+      } else {
+        buyersSellersChartInstance.data.labels = tickLabels;
+        buyersSellersChartInstance.data.datasets[0].data = tickBuyersPct;
+        buyersSellersChartInstance.data.datasets[1].data = tickSellersPct;
+        buyersSellersChartInstance.data.datasets[2].data = eq50;
+        buyersSellersChartInstance.update('none');
+      }
     }
   }
 
@@ -894,7 +1598,11 @@ async function syncAgentsBackground(endpoint = '/api/compare') {
       layaOptimalThreshold.value = latestRl.value.optimal_threshold;
     }
     if (latestRl.value?.calibration_index_pct) {
+      lastSyncCalibPct.value = Number(latestRl.value.calibration_index_pct);
       kpiCalibSub.value = `Fiabilidad RL Local (1 − Brier): ${latestRl.value.calibration_index_pct.toFixed(1)}% (${latestRl.value.episodes_trained} ep)`;
+    }
+    if (data.summary?.buyers_pct !== undefined) {
+      lastSyncBuyersPct = Number(data.summary.buyers_pct);
     }
 
     if (rlChartCanvas.value && latestRl.value) {
@@ -934,9 +1642,21 @@ async function syncAgentsBackground(endpoint = '/api/compare') {
 }
 
 onMounted(() => {
+  if (overlayChartCanvas.value) {
+    overlayChartCanvas.value.addEventListener('mousemove', (e: MouseEvent) => {
+      const rect = overlayChartCanvas.value!.getBoundingClientRect();
+      chartHoverX = e.clientX - rect.left;
+      chartHoverY = e.clientY - rect.top;
+    });
+    overlayChartCanvas.value.addEventListener('mouseleave', () => {
+      chartHoverX = null;
+      chartHoverY = null;
+    });
+  }
   initInitialPriceHistory();
   feedManager.startAllStreams();
   requestAnimationFrame(updateCountdownClock);
+  requestAnimationFrame(renderFluidOverlay60FPS);
   syncAgentsBackground('/api/compare');
   setInterval(() => syncAgentsBackground('/api/compare'), 3500);
   setInterval(syncPolymarket5mContract, 1200);

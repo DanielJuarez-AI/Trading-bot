@@ -3,7 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Laya AI vs. Polymarket BTC Up or Down 5m | Agente Financiero IA (Rúbrica Proyecto Final)</title>
+  <title>Laya AI v1.1.0 vs. Polymarket BTC Up or Down 5m | Agente Financiero IA (60 FPS)</title>
+  <script type="application/ld+json" id="polymarketSchemaJsonLd">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Bitcoin Up or Down - November 19, 9:25AM-9:30AM ET",
+    "description": "Prediction market: Up 51% · Down 50% on Polymarket.",
+    "url": "https://polymarket.com/event/btc-updown-5m-1795098300",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Polymarket",
+      "url": "https://polymarket.com"
+    }
+  }
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script crossorigin src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
   <script crossorigin src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
@@ -268,6 +282,391 @@
 
     .tap-win strong { color: var(--true-green); }
 
+    .bet-disabled {
+      opacity: 0.42 !important;
+      pointer-events: none !important;
+      filter: grayscale(0.65);
+      cursor: not-allowed !important;
+    }
+
+    .window-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-left: 8px;
+    }
+    .window-open {
+      background: rgba(16, 185, 129, 0.16);
+      border: 1px solid rgba(16, 185, 129, 0.55);
+      color: #34d399;
+    }
+    .window-locked {
+      background: rgba(239, 68, 68, 0.18);
+      border: 1px solid rgba(239, 68, 68, 0.65);
+      color: #fca5a5;
+    }
+
+    .dual-conf-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+      align-items: center;
+    }
+    .conf-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      font-family: 'Consolas', monospace;
+    }
+    .conf-pill.pass {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.6);
+      color: #34d399;
+    }
+
+    /* ============================================================================
+       WORKSTATION POLYMARKET: GRÁFICA EXACTA (IZQ) + COLUMNA UP/DOWN (DER)
+       ============================================================================ */
+    .poly-workstation-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.55fr) minmax(350px, 1fr);
+      gap: 16px;
+      margin-bottom: 18px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 1180px) {
+      .poly-workstation-grid { grid-template-columns: 1fr; }
+    }
+
+    .poly-chart-card {
+      min-width: 0;
+      border-radius: 16px;
+      padding: 18px 20px 14px 20px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    /* Tema Claro 1:1 Polymarket */
+    .poly-chart-card.poly-light {
+      background: #ffffff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+    }
+
+    .poly-chart-card.poly-dark {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+    }
+
+    .poly-header-exact {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+
+    .poly-prices-strip {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 18px;
+    }
+
+    .poly-v-divider {
+      width: 1px;
+      height: 42px;
+      background: rgba(148, 163, 184, 0.35);
+    }
+
+    .poly-metric-lbl {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 2px;
+    }
+
+    .poly-light .poly-beat-val {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #475569;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    .poly-dark .poly-beat-val {
+      font-size: 1.55rem;
+      font-weight: 800;
+      color: #cbd5e1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .poly-current-val {
+      font-size: 1.72rem;
+      font-weight: 800;
+      color: #f59e0b;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    .poly-laya-val {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #a855f7;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    .poly-delta-pill {
+      font-size: 0.76rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .poly-timer-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .poly-countdown-exact {
+      display: flex;
+      gap: 10px;
+      color: #ef4444;
+      text-align: center;
+      align-items: baseline;
+    }
+
+    .poly-countdown-exact .cd-num {
+      font-size: 1.75rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .poly-countdown-exact .cd-lbl {
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.05em;
+    }
+
+    .poly-brand-wordmark {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: -0.02em;
+    }
+
+    .poly-theme-toggle {
+      font-size: 0.7rem;
+      padding: 4px 9px;
+      border-radius: 7px;
+      border: 1px solid #cbd5e1;
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .poly-dark .poly-theme-toggle {
+      border-color: #334155;
+      background: #1e293b;
+      color: #cbd5e1;
+    }
+
+    .poly-canvas-wrap {
+      position: relative;
+      height: 365px;
+      width: 100%;
+    }
+
+    .poly-source-pill {
+      position: absolute;
+      left: 8px;
+      bottom: 4px;
+      background: rgba(148, 163, 184, 0.22);
+      color: #475569;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      pointer-events: none;
+      z-index: 6;
+    }
+
+    .poly-dark .poly-source-pill {
+      background: rgba(30, 41, 59, 0.85);
+      color: #cbd5e1;
+    }
+
+    /* COLUMNA DERECHA: UP/DOWN + CARACTERÍSTICAS PERTINENTES */
+    .poly-right-col {
+      min-width: 0;
+      background: linear-gradient(155deg, rgba(16, 185, 129, 0.08) 0%, rgba(15, 23, 42, 0.98) 65%);
+      border: 1px solid rgba(16, 185, 129, 0.42);
+      border-radius: 16px;
+      padding: 15px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 11px;
+    }
+
+    .poly-features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 7px;
+    }
+
+    .poly-feat-item {
+      background: rgba(6, 9, 17, 0.78);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 6px 9px;
+    }
+
+    .poly-feat-lbl {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+    }
+
+    .poly-feat-val {
+      font-size: 0.86rem;
+      font-weight: 700;
+      margin-top: 1px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* SECCIÓN INFERIOR: BARRAS DE CONFIABILIDAD + COMPRADORES VS VENDEDORES */
+    .poly-below-analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    @media (max-width: 1100px) {
+      .poly-below-analytics-grid { grid-template-columns: 1fr; }
+    }
+
+    .reliability-list {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      margin-top: 6px;
+    }
+
+    .reliability-bar-item {
+      background: rgba(6, 9, 17, 0.72);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 10px 13px;
+    }
+
+    .reliability-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .reliability-track {
+      position: relative;
+      height: 13px;
+      width: 100%;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: visible;
+    }
+
+    .reliability-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.25s ease, background 0.25s ease;
+    }
+
+    .threshold-85-marker {
+      position: absolute;
+      left: 85%;
+      top: -4px;
+      bottom: -4px;
+      width: 2px;
+      background: #f8fafc;
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+      z-index: 3;
+    }
+
+    .threshold-85-tag {
+      position: absolute;
+      left: 85%;
+      top: -15px;
+      transform: translateX(-50%);
+      font-size: 0.6rem;
+      font-weight: 800;
+      color: #fbbf24;
+      font-family: 'Consolas', monospace;
+    }
+
+    /* TUG OF WAR COMPRADORES VS VENDEDORES */
+    .tug-of-war-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.84rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .tug-of-war-track {
+      display: flex;
+      height: 16px;
+      width: 100%;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #1e293b;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+
+    .tug-buyers-fill {
+      background: linear-gradient(90deg, #059669, #10b981);
+      height: 100%;
+      transition: width 0.25s ease;
+    }
+
+    .tug-sellers-fill {
+      background: linear-gradient(90deg, #ef4444, #dc2626);
+      height: 100%;
+      transition: width 0.25s ease;
+    }
+
     .ticket-stats {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -501,24 +900,31 @@
     .floating-bets-feed {
       position: absolute;
       left: 12px;
-      bottom: 36px;
+      bottom: 32px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      justify-content: flex-end;
+      gap: 3px;
       pointer-events: none;
       z-index: 5;
+      max-height: 105px;
+      overflow: hidden;
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.65) 45%, rgba(0,0,0,1) 100%);
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.65) 45%, rgba(0,0,0,1) 100%);
     }
 
     .feed-bubble {
-      font-size: 0.8rem;
+      font-size: 0.76rem;
       font-weight: 800;
-      animation: floatUp 2.2s ease-out forwards;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      animation: feedSlideIn 0.25s ease-out;
     }
 
-    @keyframes floatUp {
-      0% { opacity: 0; transform: translateY(8px); }
-      20% { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(-14px); }
+    @keyframes feedSlideIn {
+      0% { opacity: 0; transform: translateY(6px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
 
     .chart-header {
@@ -732,8 +1138,8 @@
     <div class="brand">
       <div class="btc-badge">&#8383;</div>
       <div>
-        <h1>BTC Up or Down 5m &bull; Polymarket Live vs. Modelo Laya AI</h1>
-        <p id="windowSubtitle">Sincronizado en Tiempo Real (Sub-Segundo WebSocket) &bull; Ventana 5 Minutos</p>
+        <h1>BTC Up or Down 5m &bull; Polymarket Live vs. Modelo Laya AI <span style="font-size: 0.72rem; background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.38); border-radius: 999px; padding: 2px 8px; vertical-align: middle; margin-left: 6px; font-weight: 700;">v1.1.0</span></h1>
+        <p id="windowSubtitle">Sincronizado en Tiempo Real (60 FPS + WebSocket 1ms) &bull; Ventana 5 Minutos</p>
       </div>
     </div>
 
@@ -771,129 +1177,315 @@
     </div>
   </header>
 
-  <!-- PANEL PROYECTO FINAL COMO AGENTE DE IA FINANCIERO EN POLYMARKET (REACT 18 + TYPESCRIPT) -->
-  <div id="react-polymarket-final-agent-root"></div>
-
-  <!-- SECCIÓN 1: TERMINAL DE APUESTAS EN VIVO CON DINERO FICTICIO + ONE-TAP BUY DE POLYMARKET -->
-  <section class="live-bet-terminal" id="bettingTerminalSection">
-    <div class="bet-header">
+  <!-- WORKSTATION POLYMARKET: GRÁFICA EXACTA + TRAZO LAYA (IZQ) & COLUMNA UP/DOWN + CARACTERÍSTICAS (DER) -->
+  <section class="poly-workstation-grid">
+    <!-- COLUMNA IZQUIERDA: INGENIERÍA INVERSA EXACTA DE POLYMARKET + TRAZO MODELO LAYA -->
+    <div class="poly-chart-card poly-light" id="polyChartCard">
       <div>
-        <h2>
-          🎰 Simulador de Apuestas en Tiempo Real (Dinero Ficticio &bull; BTC Up or Down 5m)
-          <span class="latency-pill" id="latencyBadge">⚡ LATENCIA: 1ms (Stream Público)</span>
-        </h2>
-        <p style="font-size:0.75rem;color:#94a3b8;margin-top:2px;" id="betHelperNotice">
-          👉 <strong>Contabilidad Real CLOB:</strong> Al apostar se descuenta el monto de tu caja. Se liquida a $1.00/share al cerrar los 5m (o al Bid actual si vendes antes).
-        </p>
+        <div class="poly-header-exact">
+          <div class="poly-prices-strip">
+            <div>
+              <span class="poly-metric-lbl">Price To Beat</span>
+              <span class="poly-beat-val" id="chartPriceToBeat">$--</span>
+            </div>
+            <div class="poly-v-divider"></div>
+            <div>
+              <span class="poly-metric-lbl" style="color:#f59e0b;">
+                Current Price
+                <span class="poly-delta-pill" id="chartDeltaBadge" style="color:#16a34a;">&#9650; $0</span>
+              </span>
+              <span class="poly-current-val" id="chartCurrentPrice">$--</span>
+            </div>
+            <div class="poly-v-divider"></div>
+            <div>
+              <span class="poly-metric-lbl" style="color:#9333ea;">
+                Trazo Laya (+15s)
+                <span class="poly-delta-pill" id="chartLayaDeltaBadge" style="color:#9333ea;">+$0</span>
+              </span>
+              <span class="poly-laya-val" id="chartLayaPrice">$--</span>
+            </div>
+          </div>
+
+          <div class="poly-timer-brand">
+            <div class="poly-countdown-exact">
+              <div>
+                <span class="cd-num" id="timerMins">04</span>
+                <span class="cd-lbl">MINS</span>
+              </div>
+              <div>
+                <span class="cd-num" id="timerSecs">59</span>
+                <span class="cd-lbl">SECS</span>
+              </div>
+              <div>
+                <span class="cd-num" id="timerMs" style="font-size:1.1rem;color:#0284c7;">000</span>
+                <span class="cd-lbl">MS</span>
+              </div>
+            </div>
+
+            <div class="poly-brand-wordmark" title="Polymarket BTC Up or Down 5m">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 4L18 9.5L5 15V4Z" />
+                <path d="M5 15L18 20V9.5" />
+                <line x1="18" y1="4" x2="18" y2="20" />
+              </svg>
+              <span>Polymarket</span>
+            </div>
+
+            <button class="poly-theme-toggle" id="btnPolyEmbedToggle" onclick="window.togglePolyOfficialEmbed()" title="Ver widget embed oficial de Polymarket (creator=danyel191)">🔗 Embed Polymarket</button>
+            <button class="poly-theme-toggle" id="btnPolyThemeToggle" onclick="window.togglePolyTheme()">🌙 Oscuro</button>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;font-size:0.74rem;color:#64748b;">
+          <span style="font-weight:700;">BTC Up or Down 5m &bull; Gráfica Real Polymarket + Superposición de Modelo Laya</span>
+          <div class="legend-tags" style="color:inherit;">
+            <span><i class="dot" style="background:#f59e0b;"></i>Precio Real Polymarket</span>
+            <span><i class="dot" style="background:#a855f7;"></i>Trazo Modelo Laya (+15s)</span>
+            <span><i class="dot" style="background:#94a3b8;"></i>Target (Price To Beat)</span>
+          </div>
+        </div>
       </div>
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-        <button id="btnStartBetBig" style="background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#fff;border:none;padding:9px 18px;border-radius:10px;font-weight:800;font-size:0.88rem;cursor:pointer;box-shadow:0 0 16px rgba(16,185,129,0.4);display:flex;align-items:center;gap:6px;">
+
+      <figure
+        class="polymarket-embed"
+        id="polymarket-btc-updown-5m-1795098300"
+        aria-label="Polymarket prediction market: Bitcoin Up or Down - November 19, 9:25AM-9:30AM ET"
+        itemscope
+        itemtype="https://schema.org/WebPage"
+        style="position:relative;display:block;width:100%;margin:0">
+        <a
+          id="polySchemaEventLink"
+          href="https://polymarket.com/event/btc-updown-5m-1795098300"
+          aria-label="View on Polymarket"
+          target="_blank"
+          rel="noopener"
+          style="position:absolute;top:4px;right:12px;width:120px;height:24px;z-index:10">
+        </a>
+        <div class="poly-canvas-wrap">
+          <div class="floating-bets-feed" id="floatingBetsFeed"></div>
+          <div class="poly-source-pill">Source: Polymarket.com</div>
+          <canvas id="overlayChart"></canvas>
+        </div>
+        <figcaption style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">
+          <strong id="polySchemaFigTitle">Bitcoin Up or Down - November 19, 9:25AM-9:30AM ET</strong><br>
+          Up <span id="polySchemaUpPct">51</span>% &middot; Down <span id="polySchemaDownPct">50</span>%<br>
+          <a id="polySchemaFigLink" href="https://polymarket.com/event/btc-updown-5m-1795098300">
+            View full market &amp; trade on Polymarket
+          </a>
+        </figcaption>
+        <div id="polyOfficialEmbedBox" style="display:none;margin-top:10px;text-align:center;">
+          <iframe
+            id="polyOfficialEmbedIframe"
+            title="Bitcoin Up or Down - November 19, 9:25AM-9:30AM ET — Polymarket Prediction Market"
+            src="https://embed.polymarket.com/market?market=btc-updown-5m-1795098300&creator=danyel191&height=300"
+            width="400"
+            height="300"
+            frameborder="0"
+            allowtransparency="true"
+            style="border-radius:12px;border:1px solid rgba(148,163,184,0.3);max-width:100%;">
+          </iframe>
+        </div>
+      </figure>
+    </div>
+
+    <!-- COLUMNA DERECHA: PANEL UP / DOWN + CARACTERÍSTICAS PERTINENTES + SIMULADOR -->
+    <aside class="poly-right-col" id="bettingTerminalSection">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+        <span style="font-size:0.88rem;font-weight:800;color:#ecfdf5;">🎯 Terminal Up / Down &amp; Riesgo</span>
+        <span class="latency-pill" id="latencyBadge">⚡ LATENCIA: ~1ms</span>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+        <span class="window-status-pill window-open" id="windowLockBadge" style="margin-left:0;">🟢 APUESTAS HABILITADAS (Primeros 4m)</span>
+      </div>
+
+      <div class="dual-conf-bar" id="dualConfBar" style="margin-top:0;">
+        <span class="conf-pill" id="p1ConfPill">Punto 1 (Modelo Calibrado): --% (&gt;85%)</span>
+        <span class="conf-pill" id="p2ConfPill">Punto 2 (Riesgo &amp; Kelly): --% (&gt;85%)</span>
+        <span class="conf-pill" id="dual85Pill">Disparador Dual &gt;85%: EN ESPERA</span>
+      </div>
+
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.76rem;font-weight:700;color:#e2e8f0;">Elegir Resultado (1-Tap Buy)</span>
+          <span id="sideTrendLabel" style="font-size:0.75rem;font-weight:800;color:var(--true-green);">
+            Tendencia Laya: COMPRA UP ▲
+          </span>
+        </div>
+
+        <div class="up-down-buttons" style="margin:7px 0 9px 0;">
+          <button class="btn-outcome active-up" id="btnChooseUp">
+            <span class="laya-rec-tag" id="recTagUp">★ LAYA</span>
+            Up <span id="upCentsText">54¢</span>
+          </button>
+          <button class="btn-outcome" id="btnChooseDown">
+            <span class="laya-rec-tag" id="recTagDown" style="display:none;">★ LAYA</span>
+            Down <span id="downCentsText">47¢</span>
+          </button>
+        </div>
+
+        <div class="one-tap-grid">
+          <div class="tap-card" data-stake="5">
+            <div class="tap-amount">$5</div>
+            <div class="tap-win">win <strong id="win5">$9.26</strong></div>
+          </div>
+          <div class="tap-card" data-stake="25">
+            <div class="tap-amount">$25</div>
+            <div class="tap-win">win <strong id="win25">$46.30</strong></div>
+          </div>
+          <div class="tap-card" data-stake="100">
+            <div class="tap-amount">$100</div>
+            <div class="tap-win">win <strong id="win100">$185.18</strong></div>
+          </div>
+          <div class="tap-card" data-stake="kelly" style="border-color:var(--laya-purple);">
+            <div class="tap-amount" style="color:var(--laya-purple);" id="kellyTapAmt">Kelly</div>
+            <div class="tap-win">Auto <strong>Laya</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap;">
+        <button id="btnStartBetBig" style="flex:1;justify-content:center;background:linear-gradient(135deg, #10b981 0%, #059669 100%);color:#fff;border:none;padding:9px 12px;border-radius:10px;font-weight:800;font-size:0.82rem;cursor:pointer;box-shadow:0 0 14px rgba(16,185,129,0.35);display:flex;align-items:center;gap:6px;">
           <span>▶</span> INICIAR APUESTA AHORA (Kelly Laya)
         </button>
-        <label style="font-size:0.78rem;color:#cbd5e1;display:flex;align-items:center;gap:5px;cursor:pointer;background:rgba(255,255,255,0.05);padding:6px 10px;border-radius:8px;">
-          <input type="checkbox" id="autoBetCheck" /> Piloto Automático Laya (Continuo)
-        </label>
-        <button id="btnSettleNow" style="background:#0284c7;color:#fff;border:none;padding:7px 12px;border-radius:8px;font-weight:700;cursor:pointer;">⚡ Vender Posición (Cashout CLOB)</button>
-        <button id="btnResetBank" style="background:#334155;color:#cbd5e1;border:1px solid #475569;padding:7px 12px;border-radius:8px;cursor:pointer;">🔄 Reset ($1,000)</button>
+        <button id="btnSettleNow" style="background:#0284c7;color:#fff;border:none;padding:8px 10px;border-radius:8px;font-weight:700;font-size:0.75rem;cursor:pointer;">⚡ Cashout</button>
+        <button id="btnResetBank" style="background:#334155;color:#cbd5e1;border:1px solid #475569;padding:8px 10px;border-radius:8px;font-size:0.75rem;cursor:pointer;">🔄 Reset</button>
+      </div>
+
+      <label style="font-size:0.74rem;color:#cbd5e1;display:flex;align-items:center;gap:6px;cursor:pointer;background:rgba(255,255,255,0.04);padding:5px 9px;border-radius:8px;">
+        <input type="checkbox" id="autoBetCheck" /> Piloto Automático Laya (Continuo &bull; Bloqueo &lt;60s)
+      </label>
+
+      <!-- CARACTERÍSTICAS PERTINENTES DEL CONTRATO Y MODELO -->
+      <div class="poly-features-grid">
+        <div class="poly-feat-item">
+          <div class="poly-feat-lbl">Contrato 5m / Oráculo</div>
+          <div class="poly-feat-val" id="featContractOracle" style="color:#38bdf8;font-size:0.74rem;">btc-updown-5m &bull; RTDS</div>
+        </div>
+        <div class="poly-feat-item">
+          <div class="poly-feat-lbl">Spread CLOB / Liquidez</div>
+          <div class="poly-feat-val" id="featSpreadLiq">1.5% &bull; 92/100</div>
+        </div>
+        <div class="poly-feat-item">
+          <div class="poly-feat-lbl">Volatilidad 5m (Parkinson)</div>
+          <div class="poly-feat-val" id="featVol5m" style="color:#fbbf24;">0.140%</div>
+        </div>
+        <div class="poly-feat-item">
+          <div class="poly-feat-lbl">Distancia Target / Laya Δ</div>
+          <div class="poly-feat-val" id="featBeatModelDist">+$0.00 / +$0.00</div>
+        </div>
+        <div class="poly-feat-item">
+          <div class="poly-feat-lbl">Banca Disponible</div>
+          <div class="poly-feat-val" id="liveBankroll" style="color:var(--true-green);">$1,000.00</div>
+        </div>
+        <div class="poly-feat-item">
+          <div class="poly-feat-lbl">Apuesta Activa / Récord</div>
+          <div class="poly-feat-val" style="font-size:0.76rem;">
+            <span id="liveStake" style="color:var(--rl-gold);">$0.00</span> &bull; <span id="liveWinLoss">0W / 0L</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="floating-pnl-box" style="padding:7px 10px;">
+        <div>
+          <div class="t-stat-label">PnL Flotante CLOB (<span id="liveBtcMove">$-- &rarr; $--</span>)</div>
+          <div style="font-size:0.7rem;color:var(--text-muted);" id="liveBetDesc">Esperando señal dual &gt;85% o clic manual...</div>
+        </div>
+        <div style="font-size:1.05rem;font-weight:800;font-family:'Consolas',monospace;" id="liveFloatingPnl">+$0.00</div>
+      </div>
+
+      <p style="font-size:0.71rem;color:#94a3b8;margin:0;" id="betHelperNotice">
+        👉 <strong>Regla Dual &gt;85% + Bloqueo Último Minuto:</strong> Se opera automáticamente cuando Punto 1 y Punto 2 superan 85%. En el último minuto (&lt;60s) se deshabilitan las apuestas.
+      </p>
+
+      <div style="background:rgba(6,9,17,0.68);border:1px solid var(--border);border-radius:10px;padding:7px 10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+          <span style="font-size:0.68rem;font-weight:700;color:#cbd5e1;text-transform:uppercase;">Curva de Capital ($ USD)</span>
+          <span style="font-size:0.7rem;font-weight:700;color:var(--true-green);" id="simSummaryBadge">Banca: $1,000.00</span>
+        </div>
+        <div style="position:relative;height:78px;width:100%;">
+          <canvas id="equityChart"></canvas>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <!-- SECCIÓN INFERIOR: BARRAS DE CONFIABILIDAD DE LOS MODELOS + GRÁFICA COMPRADORES VS VENDEDORES -->
+  <section class="poly-below-analytics-grid">
+    <!-- BARRAS DE CONFIANZA DEL MODELO PARA EJECUTAR LA OPERACIÓN -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h2>🎯 Confianza del Modelo para Ejecutar la Operación (Umbral &gt;85%)</h2>
+        <span style="font-size:0.72rem;color:#fbbf24;font-weight:700;">Disparo Automático: Ambos &gt;85.0%</span>
+      </div>
+
+      <div class="reliability-list">
+        <div class="reliability-bar-item">
+          <div class="reliability-head">
+            <span>Punto 1 &mdash; Confianza del Modelo Predictivo para Operar (Platt + 1 &minus; Brier)</span>
+            <span id="barP1Value" style="color:#c084fc;font-family:'Consolas',monospace;">0.0%</span>
+          </div>
+          <div class="reliability-track">
+            <span class="threshold-85-tag">85%</span>
+            <div class="threshold-85-marker"></div>
+            <div class="reliability-fill" id="barP1Fill" style="width:0%;background:linear-gradient(90deg,#7c3aed,#a855f7);"></div>
+          </div>
+        </div>
+
+        <div class="reliability-bar-item">
+          <div class="reliability-head">
+            <span>Punto 2 &mdash; Confianza de Riesgo &amp; Criterio de Kelly para Operar (0.25&times;)</span>
+            <span id="barP2Value" style="color:#38bdf8;font-family:'Consolas',monospace;">0.0%</span>
+          </div>
+          <div class="reliability-track">
+            <span class="threshold-85-tag">85%</span>
+            <div class="threshold-85-marker"></div>
+            <div class="reliability-fill" id="barP2Fill" style="width:0%;background:linear-gradient(90deg,#0284c7,#38bdf8);"></div>
+          </div>
+        </div>
+
+        <div class="reliability-bar-item">
+          <div class="reliability-head">
+            <span>Confianza Conjunta para Ejecutar la Orden (<span id="barExecSideTag">▲ UP</span> &bull; Mín(P1, P2) &gt; 85%)</span>
+            <span id="barRlValue" style="color:#10b981;font-family:'Consolas',monospace;">0.0%</span>
+          </div>
+          <div class="reliability-track">
+            <span class="threshold-85-tag">85%</span>
+            <div class="threshold-85-marker"></div>
+            <div class="reliability-fill" id="barRlFill" style="width:0%;background:linear-gradient(90deg,#059669,#10b981);"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;font-size:0.74rem;color:#94a3b8;background:rgba(15,23,42,0.8);padding:8px 11px;border-radius:9px;border:1px solid var(--border);">
+        <span>Estado de Ejecución Automática (Punto 1 &gt;85% &amp; Punto 2 &gt;85%):</span>
+        <strong id="barDualStatusText" style="color:#fbbf24;">EN ESPERA</strong>
       </div>
     </div>
 
-    <div class="bet-grid">
-      <!-- Sub-panel 1: Controles Up / Down + One-Tap Buy estilo Polymarket -->
-      <div class="sub-box">
-        <div>
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:0.8rem;font-weight:700;color:#e2e8f0;">Seleccionar Dirección (1-Tap Buy)</span>
-            <span id="sideTrendLabel" style="font-size:0.78rem;font-weight:800;color:var(--true-green);">
-              Tendencia Laya: COMPRA UP ▲
-            </span>
-          </div>
-
-          <div class="up-down-buttons">
-            <button class="btn-outcome active-up" id="btnChooseUp">
-              <span class="laya-rec-tag" id="recTagUp">★ LAYA</span>
-              Up <span id="upCentsText">54¢</span>
-            </button>
-            <button class="btn-outcome" id="btnChooseDown">
-              <span class="laya-rec-tag" id="recTagDown" style="display:none;">★ LAYA</span>
-              Down <span id="downCentsText">47¢</span>
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;">
-            One-Tap Buy con Dinero Ficticio (Haz clic para apostar)
-          </div>
-          <div class="one-tap-grid">
-            <div class="tap-card" data-stake="5">
-              <div class="tap-amount">$5</div>
-              <div class="tap-win">win <strong id="win5">$9.26</strong></div>
-            </div>
-            <div class="tap-card" data-stake="25">
-              <div class="tap-amount">$25</div>
-              <div class="tap-win">win <strong id="win25">$46.30</strong></div>
-            </div>
-            <div class="tap-card" data-stake="100">
-              <div class="tap-amount">$100</div>
-              <div class="tap-win">win <strong id="win100">$185.18</strong></div>
-            </div>
-            <div class="tap-card" data-stake="kelly" style="border-color:var(--laya-purple);">
-              <div class="tap-amount" style="color:var(--laya-purple);" id="kellyTapAmt">Kelly</div>
-              <div class="tap-win">Auto <strong>Laya</strong></div>
-            </div>
-          </div>
-        </div>
+    <!-- GRÁFICA DE PORCENTAJE COMPRADORES VS VENDEDORES -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h2>⚖️ Presión del Mercado: % Compradores vs. % Vendedores (Tiempo Real)</h2>
+        <span id="tugImbalanceTag" style="font-size:0.72rem;color:#38bdf8;font-weight:700;">Equilibrio 50% / 50%</span>
       </div>
 
-      <!-- Sub-panel 2: Estado del Ticket Activo y Banca Ficticia -->
-      <div class="sub-box">
-        <div class="ticket-stats">
-          <div class="t-stat">
-            <div class="t-stat-label">Banca Ficticia Disponible</div>
-            <div class="t-stat-val" style="color:var(--true-green);" id="liveBankroll">$1,000.00</div>
-          </div>
-          <div class="t-stat">
-            <div class="t-stat-label">Apuesta Activa (Shares)</div>
-            <div class="t-stat-val" style="color:var(--rl-gold);" id="liveStake">$0.00 (0 sh)</div>
-          </div>
-          <div class="t-stat">
-            <div class="t-stat-label">BTC Entrada &rarr; Actual</div>
-            <div class="t-stat-val" id="liveBtcMove">$-- &rarr; $--</div>
-          </div>
-          <div class="t-stat">
-            <div class="t-stat-label">Récord Sesión (Ganadas/Perdidas)</div>
-            <div class="t-stat-val" id="liveWinLoss">0W / 0L</div>
-          </div>
-        </div>
-
-        <div class="floating-pnl-box">
-          <div>
-            <div class="t-stat-label">PnL No Realizado (Mark-to-Market en Vivo)</div>
-            <div style="font-size:0.74rem;color:var(--text-muted);" id="liveBetDesc">
-              Calculando retorno instantáneo frente a Price To Beat...
-            </div>
-          </div>
-          <div style="font-size:1.35rem;font-weight:800;font-family:'Consolas',monospace;" id="liveFloatingPnl">
-            +$0.00 (0.00%)
-          </div>
-        </div>
+      <div class="tug-of-war-head">
+        <span id="tugBuyersLabel" style="color:#10b981;">▲ Compradores: 50.0%</span>
+        <span id="tugSellersLabel" style="color:#ef4444;">▼ Vendedores: 50.0%</span>
+      </div>
+      <div class="tug-of-war-track">
+        <div class="tug-buyers-fill" id="tugBuyersFill" style="width:50%;"></div>
+        <div class="tug-sellers-fill" id="tugSellersFill" style="width:50%;"></div>
       </div>
 
-      <!-- Sub-panel 3: Curva de Capital Ficticio -->
-      <div class="sub-box">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-size:0.75rem;font-weight:700;color:#e2e8f0;text-transform:uppercase;">Curva de Capital ($ USD)</span>
-          <span style="font-size:0.75rem;font-weight:700;color:var(--true-green);" id="simSummaryBadge">ROI: +18.29%</span>
-        </div>
-        <div style="position:relative;height:135px;width:100%;">
-          <canvas id="equityChart"></canvas>
-        </div>
+      <div style="position:relative;height:185px;width:100%;">
+        <canvas id="buyersSellersChart"></canvas>
       </div>
     </div>
   </section>
 
-  <!-- SECCIÓN 2: TARJETAS KPI EN DISTRIBUCIÓN ORIGINAL -->
+  <!-- SECCIÓN 2: TARJETAS KPI EN DISTRIBUCIÓN COMPACTA -->
   <section class="kpi-grid">
     <div class="kpi-card">
       <div class="kpi-title">Resultado Booleano &amp; Confianza Laya</div>
@@ -931,59 +1523,8 @@
     </div>
   </section>
 
-  <!-- SECCIÓN 3: GRÁFICA PRINCIPAL ESTILO POLYMARKET (CON SUPERPOSICIÓN LAYA EN VIVO) -->
+  <!-- SECCIÓN 3: GRÁFICAS SECUNDARIAS -->
   <section class="charts-container">
-    <div class="chart-card">
-      <div class="poly-overlay-bar">
-        <div class="poly-prices-left">
-          <div>
-            <span class="p-label">Price To Beat</span>
-            <span class="p-beat" id="chartPriceToBeat">$--</span>
-          </div>
-          <div>
-            <span class="p-label" style="color:var(--btc-orange);">Current Price (Polymarket Real)</span>
-            <span class="p-current" id="chartCurrentPrice">$--</span>
-          </div>
-          <div>
-            <span class="p-label" style="color:var(--laya-purple);">Predicción Superpuesta Laya (+15s)</span>
-            <span class="p-laya" id="chartLayaPrice">$--</span>
-          </div>
-        </div>
-
-        <div class="poly-timer-box">
-          <div class="countdown-red">
-            <div>
-              <span class="cd-num" id="timerMins">04</span>
-              <span class="cd-lbl">MINS</span>
-            </div>
-            <div>
-              <span class="cd-num" id="timerSecs">59</span>
-              <span class="cd-lbl">SECS</span>
-            </div>
-            <div>
-              <span class="cd-num" id="timerMs" style="font-size:1.15rem;color:#38bdf8;">000</span>
-              <span class="cd-lbl">MS (1ms)</span>
-            </div>
-          </div>
-          <div style="font-size:1.15rem;font-weight:800;color:#64748b;">&#9671; Polymarket</div>
-        </div>
-      </div>
-
-      <div class="chart-header">
-        <h2>1. Gráfica en Tiempo Real (`BTC Up or Down 5m`) + Superposición de Predicción y Tendencia de Laya</h2>
-        <div class="legend-tags">
-          <span><i class="dot" style="background:var(--btc-orange);"></i>Precio Real Polymarket (Tick a Tick)</span>
-          <span><i class="dot" style="background:var(--laya-purple);"></i>Predicción Modelo Laya (Superpuesta)</span>
-          <span><i class="dot" style="background:#94a3b8;"></i>Price To Beat (Meta 5m)</span>
-        </div>
-      </div>
-
-      <div class="canvas-wrap">
-        <div class="floating-bets-feed" id="floatingBetsFeed"></div>
-        <canvas id="overlayChart"></canvas>
-      </div>
-    </div>
-
     <div class="charts-row-2">
       <div class="chart-card">
         <div class="chart-header">
@@ -1004,6 +1545,9 @@
       </div>
     </div>
   </section>
+
+  <!-- PANEL PROYECTO FINAL COMO AGENTE DE IA FINANCIERO EN POLYMARKET (REACT 18 + TYPESCRIPT) -->
+  <div id="react-polymarket-final-agent-root"></div>
 
   <!-- SECCIÓN 4: BITÁCORA DE APUESTAS EJECUTADAS -->
   <section class="table-card">
@@ -1108,12 +1652,79 @@
     let currentDownCents = 47;
     let selectedDirection = 'UP';
 
-    // Buffers en tiempo real (últimos 60 puntos + proyección futura)
+    // Punto 1 (Modelo Calibrado) + Punto 2 (Riesgo Determinista/Kelly) > 85% + Bloqueo último minuto (<60s)
+    let lastSyncCalibPct = 91.13;
+    let point1ModelConfPct = 0.0;
+    let point2RiskConfPct = 0.0;
+    let dual85Passed = false;
+    let isLastMinuteLocked = false;
+    let remainingWindowSec = 300;
+    let autoOperatedWindowBucket = 0;
+
+    // Buffers en tiempo real (últimos 60 puntos + motor continuo 60 FPS)
     const MAX_POINTS = 60;
+    const FLUID_WINDOW_MS = 22000;
+    const FLUID_LEAD_MS = 3200;
     let tickLabels = [];
     let tickRealPrices = [];
     let tickLayaPrices = [];
     let tickDiffs = [];
+    let tickBuyersPct = [];
+    let tickSellersPct = [];
+    let fluidPoints = [];
+    let stage1Spot = 0;
+    let stage1Laya = 0;
+    let displaySpotPrice = 0;
+    let displayLayaPrice = 0;
+    let smoothYMin = 0;
+    let smoothYMax = 0;
+    let lastFluidPushMs = 0;
+    let hoverCanvasX = null;
+    let hoverCanvasY = null;
+    let buyersSellersChartInstance = null;
+    let polyThemeMode = 'light';
+    let currentBuyersPct = 50.0;
+    let currentSellersPct = 50.0;
+    let lastSyncBuyersPct = 50.0;
+    let lastSyncClobImbalance = 0.0;
+    let lastSyncSpreadPct = 1.5;
+    let lastSyncLiquidityScore = 92.0;
+    let lastSyncVol5mPct = 0.14;
+
+    window.togglePolyOfficialEmbed = function() {
+      const box = document.getElementById('polyOfficialEmbedBox');
+      const iframe = document.getElementById('polyOfficialEmbedIframe');
+      const btn = document.getElementById('btnPolyEmbedToggle');
+      if (!box) return;
+      const show = box.style.display === 'none' || !box.style.display;
+      box.style.display = show ? 'block' : 'none';
+      if (btn) btn.textContent = show ? '✖ Ocultar Embed' : '🔗 Embed Polymarket';
+      if (show && iframe) {
+        const slug = activePolySlug || 'btc-updown-5m-1795098300';
+        const targetSrc = `https://embed.polymarket.com/market?market=${encodeURIComponent(slug)}&creator=danyel191&height=300`;
+        if (iframe.getAttribute('src') !== targetSrc) {
+          iframe.setAttribute('src', targetSrc);
+        }
+      }
+    };
+
+    window.togglePolyTheme = function() {
+      polyThemeMode = polyThemeMode === 'light' ? 'dark' : 'light';
+      const card = document.getElementById('polyChartCard');
+      const btn = document.getElementById('btnPolyThemeToggle');
+      if (card) {
+        card.classList.toggle('poly-light', polyThemeMode === 'light');
+        card.classList.toggle('poly-dark', polyThemeMode === 'dark');
+      }
+      if (btn) {
+        btn.textContent = polyThemeMode === 'light' ? '🌙 Oscuro' : '☀️ Claro Polymarket';
+      }
+      if (overlayChartInstance) {
+        overlayChartInstance.destroy();
+        overlayChartInstance = null;
+      }
+      renderRealtimeCharts();
+    };
 
     // Banca Ficticia en Tiempo Real (Efectivo en Caja + Posición CLOB Activa)
     let virtualBankroll = 1000.0; // Efectivo disponible en caja
@@ -1270,24 +1881,73 @@
         tickRealPrices = [];
         tickLayaPrices = [];
         tickDiffs = [];
+        tickBuyersPct = [];
+        tickSellersPct = [];
+        fluidPoints = [];
 
-        for (let i = 0; i < k1s.length; i++) {
+        const nowMsInit = getAtomicNowMs();
+        const kLen = k1s.length;
+        const startIdx = Math.max(0, kLen - 28);
+        const rawCloses = k1s.map(row => +(parseFloat(row[4]) + basisOffset).toFixed(2));
+        const smoothCloses = rawCloses.map((val, idx) => {
+          const a = rawCloses[Math.max(0, idx - 1)];
+          const b = val;
+          const c = rawCloses[Math.min(rawCloses.length - 1, idx + 1)];
+          return +((a + b * 2.0 + c) / 4.0).toFixed(2);
+        });
+
+        for (let i = 0; i < kLen; i++) {
           const ts = k1s[i][0];
-          const p = +(parseFloat(k1s[i][4]) + basisOffset).toFixed(2);
+          const p = smoothCloses[i];
           const lbl = new Date(ts).toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit' });
           tickLabels.push(lbl);
           tickRealPrices.push(p);
 
           const prevP = i > 0 ? tickRealPrices[i - 1] : p;
           const prevPrevP = i > 3 ? tickRealPrices[i - 4] : prevP;
-          const mom = (p - prevPrevP) * 1.45 + (p - priceToBeat) * 0.18;
+          const mom = npClip((p - prevPrevP) * 0.45 + npClip(p - priceToBeat, -18.0, 18.0) * 0.06, -7.5, 7.5);
           const predP = +(p + mom).toFixed(2);
           tickLayaPrices.push(predP);
           tickDiffs.push(+(predP - p).toFixed(2));
+
+          const kVol = parseFloat(k1s[i][5] || '1');
+          const kTakerBuy = parseFloat(k1s[i][9] || String(kVol * 0.5));
+          const takerRatioPct = npClip((kTakerBuy / Math.max(1e-8, kVol)) * 100.0, 5.0, 95.0);
+          const buyPct = +npClip(0.75 * takerRatioPct + 0.25 * (50.0 + lastSyncClobImbalance * 50.0), 5.0, 95.0).toFixed(1);
+          tickBuyersPct.push(buyPct);
+          tickSellersPct.push(+(100.0 - buyPct).toFixed(1));
+
+          if (i >= startIdx) {
+            const relTs = nowMsInit - (kLen - 1 - i) * 1000;
+            if (i > startIdx) {
+              const p0 = tickRealPrices[i - 1];
+              const l0 = p0 + npClip(tickLayaPrices[i - 1] - p0, -7.5, 7.5);
+              const l1 = p + npClip(predP - p, -7.5, 7.5);
+              const t0 = relTs - 1000;
+              for (let s = 1; s <= 12; s++) {
+                const f = s / 12.0;
+                const ease = f * f * (3.0 - 2.0 * f);
+                const tsPt = t0 + f * 1000;
+                const wave = Math.sin(tsPt * 0.0082) * 0.22;
+                const realPt = +(p0 + (p - p0) * ease + wave).toFixed(2);
+                const layaPt = +(l0 + (l1 - l0) * ease + wave * 0.6).toFixed(2);
+                fluidPoints.push({ ts: tsPt, real: realPt, laya: layaPt });
+              }
+            } else {
+              fluidPoints.push({ ts: relTs, real: p, laya: +(p + npClip(predP - p, -7.5, 7.5)).toFixed(2) });
+            }
+          }
         }
 
         liveSpotPrice = tickRealPrices[tickRealPrices.length - 1];
+        stage1Spot = liveSpotPrice;
+        displaySpotPrice = liveSpotPrice;
         recomputeLayaRealtime();
+        stage1Laya = layaPredictedPrice;
+        displayLayaPrice = layaPredictedPrice;
+        smoothYMin = 0;
+        smoothYMax = 0;
+        lastFluidPushMs = nowMsInit;
         renderRealtimeCharts();
         updateFastDOM('INIT-1MS');
       } catch (e) {
@@ -1329,9 +1989,13 @@
                   if (lastBinanceBookMid > 1000) {
                     chainlinkBasisOffset = lastChainlinkSpot - lastBinanceBookMid;
                   }
-                }
-                if (currentOracle === 'polymarket_rtds') {
-                  onNewRealtimeTick(val, 'POLY-RTDS');
+                  if (currentOracle === 'polymarket_rtds') {
+                    onNewRealtimeTick(val, 'POLY-RTDS');
+                  }
+                } else if (msg.topic === 'crypto_prices') {
+                  if (currentOracle === 'polymarket_rtds' && lastBinanceBookMid === 0) {
+                    onNewRealtimeTick(val + chainlinkBasisOffset, 'POLY-USDT');
+                  }
                 }
               }
             }
@@ -1452,6 +2116,14 @@
       measuredTickDeltaMs = Math.max(0.8, Math.min(12.0, 0.85 * measuredTickDeltaMs + 0.15 * Math.min(15.0, nowPerf - lastTickPerfMs)));
       lastTickPerfMs = nowPerf;
 
+      if (liveSpotPrice > 1000 && Math.abs(price - liveSpotPrice) > 18.0) {
+        const jumpDelta = price - liveSpotPrice;
+        if (sourceTag === 'POLY-1MS') {
+          chainlinkBasisOffset += jumpDelta * 0.15;
+        }
+        price = liveSpotPrice + npClip(jumpDelta, -1.8, 1.8);
+      }
+
       liveSpotPrice = +price.toFixed(2);
       const atomicNowMs = getAtomicNowMs();
 
@@ -1459,6 +2131,8 @@
       const bucket = Math.floor((atomicNowMs + windowOffsetSec * 1000) / 300000);
       if (currentWindowStartBucket !== 0 && bucket !== currentWindowStartBucket) {
         currentWindowStartBucket = bucket;
+        autoOperatedWindowBucket = 0;
+        isLastMinuteLocked = false;
         // Liquidar oficialmente al cierre de la vela de 5 minutos ($1.00/share si gana, $0.00 si pierde)
         if (activeVirtualBet) {
           settleVirtualBet(false);
@@ -1466,6 +2140,10 @@
         officialPolyPriceToBeat = null;
         if (!manualPriceToBeat) {
           priceToBeat = liveSpotPrice;
+        }
+        const noticeEl = document.getElementById('betHelperNotice');
+        if (noticeEl) {
+          noticeEl.innerHTML = '🔓 <strong>Nuevo periodo de 5 minutos iniciado:</strong> Apuestas rehabilitadas automáticamente. Esperando señal dual &gt;85% (Punto 1 + Punto 2).';
         }
         syncPolymarket5mContract();
       } else if (currentWindowStartBucket === 0) {
@@ -1484,17 +2162,25 @@
         tickRealPrices.push(liveSpotPrice);
         tickLayaPrices.push(layaPredictedPrice);
         tickDiffs.push(+(layaPredictedPrice - liveSpotPrice).toFixed(2));
+        tickBuyersPct.push(currentBuyersPct);
+        tickSellersPct.push(currentSellersPct);
 
         if (tickLabels.length > MAX_POINTS) {
           tickLabels.shift();
           tickRealPrices.shift();
           tickLayaPrices.shift();
           tickDiffs.shift();
+          tickBuyersPct.shift();
+          tickSellersPct.shift();
         }
       } else if (tickRealPrices.length > 0) {
         tickRealPrices[tickRealPrices.length - 1] = liveSpotPrice;
         tickLayaPrices[tickLayaPrices.length - 1] = layaPredictedPrice;
         tickDiffs[tickDiffs.length - 1] = +(layaPredictedPrice - liveSpotPrice).toFixed(2);
+        if (tickBuyersPct.length > 0) {
+          tickBuyersPct[tickBuyersPct.length - 1] = currentBuyersPct;
+          tickSellersPct[tickSellersPct.length - 1] = currentSellersPct;
+        }
       }
 
       // Renderizado acoplado a ~60 FPS (~16ms) para no saturar el hilo de UI mientras procesa ticks de 1ms
@@ -1513,13 +2199,14 @@
         return;
       }
 
-      // Velocidad a 3s, 10s y distancia respecto a Price To Beat
+      // Velocidad a corto plazo acotada y distancia suave respecto a Price To Beat
       const pNow = liveSpotPrice;
       const p3 = tickRealPrices[Math.max(0, n - 4)];
       const p10 = tickRealPrices[Math.max(0, n - 11)];
-      const vShort = pNow - p3;
-      const vMed = pNow - p10;
+      const vShort = npClip(pNow - p3, -10.0, 10.0);
+      const vMed = npClip(pNow - p10, -16.0, 16.0);
       const distFromBeat = pNow - priceToBeat;
+      const distClamp = npClip(distFromBeat, -18.0, 18.0);
 
       // Volatilidad intrabarra en los últimos ticks
       let sumSq = 0;
@@ -1529,10 +2216,14 @@
       }
       const tickStd = Math.sqrt(sumSq / n) || 2.5;
 
-      // Proyección de Laya para el cierre de los próximos segundos de la ventana 5m
-      const momentumScore = (0.62 * vShort + 0.38 * vMed) + 0.22 * distFromBeat;
-      const projectedDelta = npClip(momentumScore * 1.35, -tickStd * 6.5, tickStd * 6.5);
-      layaPredictedPrice = +(pNow + projectedDelta).toFixed(2);
+      // Proyección Laya acotada y suavizada (sin saltos verticales de escala)
+      const rawDelta = npClip(0.42 * vShort + 0.22 * vMed + 0.06 * distClamp, -8.0, 8.0);
+      const rawTargetLaya = pNow + rawDelta;
+      layaPredictedPrice = +(
+        layaPredictedPrice > 1000
+          ? (0.80 * layaPredictedPrice + 0.20 * rawTargetLaya)
+          : rawTargetLaya
+      ).toFixed(2);
 
       // Dirección hacia Compra UP o Compra DOWN respecto a Price To Beat
       layaTrend = layaPredictedPrice >= priceToBeat ? 'UP' : 'DOWN';
@@ -1547,6 +2238,32 @@
       const probUp = npClip(0.50 + (distFromBeat / Math.max(18.0, tickStd * 5.0)) * 0.38, 0.06, 0.94);
       currentUpCents = Math.round(probUp * 100);
       currentDownCents = Math.max(1, 101 - currentUpCents);
+
+      // Punto 1 (Modelo Predictivo Sencillo y Bien Calibrado): Platt/Signal + Fiabilidad (1 - Brier)
+      point1ModelConfPct = +(npClip(0.55 * lastSyncCalibPct + 0.45 * (layaConfidence * 100.0), 0.0, 99.5)).toFixed(1);
+
+      // Punto 2 (Reglas Deterministas de Riesgo & Kelly Fraccional 0.25x):
+      const targetCents = layaTrend === 'UP' ? currentUpCents : currentDownCents;
+      const askProbEst = Math.min(0.98, Math.max(0.05, (targetCents + 1) / 100.0));
+      const bOdds = Math.max(0.25, (1.0 - askProbEst) / askProbEst);
+      const kellyRaw = Math.max(0.0, (layaConfidence * bOdds - (1.0 - layaConfidence)) / bOdds);
+      const marginPts = virtualBankroll >= 10.0 ? 30.0 : (virtualBankroll >= 1.0 ? 15.0 : 0.0);
+      const liqPts = 30.0; // Spread CLOB normalizado (1¢)
+      const edgePts = kellyRaw > 0 ? Math.min(1.0, kellyRaw / 0.28) * 40.0 : 0.0;
+      point2RiskConfPct = +(npClip(marginPts + liqPts + edgePts, 0.0, 99.5)).toFixed(1);
+
+      dual85Passed = (point1ModelConfPct > 85.0) && (point2RiskConfPct > 85.0);
+
+      // Porcentaje Compradores vs Vendedores en tiempo real (Presión Taker + Imbalance CLOB)
+      const localMomentumBuyers = 50.0 + npClip((vShort * 2.2 + vMed * 0.9) / Math.max(1.5, tickStd) * 16.0, -32.0, 32.0) + lastSyncClobImbalance * 18.0;
+      currentBuyersPct = +(npClip(0.65 * localMomentumBuyers + 0.35 * lastSyncBuyersPct, 5.0, 95.0)).toFixed(1);
+      currentSellersPct = +(100.0 - currentBuyersPct).toFixed(1);
+
+      // Operación automática cuando Punto 1 > 85% y Punto 2 > 85% fuera del último minuto (<60s)
+      if (!isLastMinuteLocked && dual85Passed && !activeVirtualBet && currentWindowStartBucket !== 0 && autoOperatedWindowBucket !== currentWindowStartBucket && virtualBankroll >= 1.0) {
+        autoOperatedWindowBucket = currentWindowStartBucket;
+        openVirtualBet('kelly');
+      }
 
       // Actualizar PnL flotante Mark-to-Market REALISTA (basado en el cambio de BTC desde la entrada + spread Bid-Ask)
       if (activeVirtualBet) {
@@ -1591,18 +2308,124 @@
       document.getElementById('chartPriceToBeat').textContent = fmt(priceToBeat);
 
       document.getElementById('kpiCurrentPrice').textContent = fmt(liveSpotPrice);
-      document.getElementById('chartCurrentPrice').textContent = fmt(liveSpotPrice);
+      document.getElementById('chartCurrentPrice').textContent = fmt(displaySpotPrice || liveSpotPrice);
 
       document.getElementById('kpiLayaPred').textContent = fmt(layaPredictedPrice);
-      document.getElementById('chartLayaPrice').textContent = fmt(layaPredictedPrice);
+      document.getElementById('chartLayaPrice').textContent = fmt(displayLayaPrice || layaPredictedPrice);
 
       const beatDiff = liveSpotPrice - priceToBeat;
       const bSign = beatDiff >= 0 ? '+' : '';
       document.getElementById('kpiBeatDelta').textContent = `Distancia al cierre: ${bSign}$${beatDiff.toFixed(2)} USD`;
 
+      const chartDeltaBadge = document.getElementById('chartDeltaBadge');
+      if (chartDeltaBadge) {
+        const upBeat = beatDiff >= 0;
+        chartDeltaBadge.textContent = `${upBeat ? '▲' : '▼'} $${Math.abs(beatDiff).toFixed(0)}`;
+        chartDeltaBadge.style.color = upBeat ? '#16a34a' : '#dc2626';
+      }
+
       const modelDiff = layaPredictedPrice - liveSpotPrice;
       const mSign = modelDiff >= 0 ? '+' : '';
       document.getElementById('kpiDiffSub').textContent = `Diferencia Laya vs Real: ${mSign}$${modelDiff.toFixed(2)} USD`;
+
+      const chartLayaDelta = document.getElementById('chartLayaDeltaBadge');
+      if (chartLayaDelta) {
+        chartLayaDelta.textContent = `${mSign}$${modelDiff.toFixed(2)}`;
+        chartLayaDelta.style.color = modelDiff >= 0 ? '#7c3aed' : '#db2777';
+      }
+
+      // Actualizar Características Pertinentes de la Columna Derecha
+      const featCO = document.getElementById('featContractOracle');
+      if (featCO) {
+        const shortSlug = (activePolySlug || 'btc-updown-5m').replace('btc-updown-5m-', '5m-');
+        featCO.textContent = `${shortSlug} • ${currentOracle.toUpperCase()}`;
+      }
+      const featSL = document.getElementById('featSpreadLiq');
+      if (featSL) {
+        featSL.textContent = `${lastSyncSpreadPct.toFixed(2)}% • ${lastSyncLiquidityScore.toFixed(0)}/100`;
+      }
+      const featVol = document.getElementById('featVol5m');
+      if (featVol) {
+        featVol.textContent = `${lastSyncVol5mPct.toFixed(3)}%`;
+      }
+      const featDist = document.getElementById('featBeatModelDist');
+      if (featDist) {
+        featDist.textContent = `${bSign}$${beatDiff.toFixed(1)} / ${mSign}$${modelDiff.toFixed(1)}`;
+      }
+
+      // Actualizar Barras de Confiabilidad de los Modelos
+      const barP1Val = document.getElementById('barP1Value');
+      const barP1Fill = document.getElementById('barP1Fill');
+      if (barP1Val && barP1Fill) {
+        barP1Val.textContent = `${point1ModelConfPct.toFixed(1)}% ${point1ModelConfPct > 85 ? '✔ >85%' : ''}`;
+        barP1Val.style.color = point1ModelConfPct > 85 ? '#34d399' : '#c084fc';
+        barP1Fill.style.width = `${npClip(point1ModelConfPct, 0, 100)}%`;
+        barP1Fill.style.background = point1ModelConfPct > 85
+          ? 'linear-gradient(90deg, #059669, #10b981)'
+          : 'linear-gradient(90deg, #7c3aed, #a855f7)';
+      }
+
+      const barP2Val = document.getElementById('barP2Value');
+      const barP2Fill = document.getElementById('barP2Fill');
+      if (barP2Val && barP2Fill) {
+        barP2Val.textContent = `${point2RiskConfPct.toFixed(1)}% ${point2RiskConfPct > 85 ? '✔ >85%' : ''}`;
+        barP2Val.style.color = point2RiskConfPct > 85 ? '#34d399' : '#38bdf8';
+        barP2Fill.style.width = `${npClip(point2RiskConfPct, 0, 100)}%`;
+        barP2Fill.style.background = point2RiskConfPct > 85
+          ? 'linear-gradient(90deg, #059669, #10b981)'
+          : 'linear-gradient(90deg, #0284c7, #38bdf8)';
+      }
+
+      const barRlVal = document.getElementById('barRlValue');
+      const barRlFill = document.getElementById('barRlFill');
+      const barExecSideTag = document.getElementById('barExecSideTag');
+      const operativeExecConfPct = +Math.min(point1ModelConfPct, point2RiskConfPct).toFixed(1);
+      if (barExecSideTag) {
+        barExecSideTag.textContent = layaTrend === 'UP' ? '▲ COMPRA UP' : '▼ COMPRA DOWN';
+        barExecSideTag.style.color = layaTrend === 'UP' ? '#34d399' : '#f87171';
+      }
+      if (barRlVal && barRlFill) {
+        barRlVal.textContent = `${operativeExecConfPct.toFixed(1)}% ${dual85Passed ? '✔ OPERAR >85%' : '(RL 1−Brier: ' + lastSyncCalibPct.toFixed(1) + '%)'}`;
+        barRlVal.style.color = dual85Passed ? '#34d399' : '#fbbf24';
+        barRlFill.style.width = `${npClip(operativeExecConfPct, 0, 100)}%`;
+        barRlFill.style.background = dual85Passed
+          ? 'linear-gradient(90deg, #059669, #10b981)'
+          : 'linear-gradient(90deg, #d97706, #f59e0b)';
+      }
+
+      const barDualTxt = document.getElementById('barDualStatusText');
+      if (barDualTxt) {
+        if (isLastMinuteLocked) {
+          barDualTxt.textContent = '🔒 BLOQUEADO (<60s ÚLTIMO MINUTO)';
+          barDualTxt.style.color = '#fca5a5';
+        } else if (dual85Passed) {
+          barDualTxt.textContent = `🟢 EJECUTANDO OPERACIÓN ${layaTrend} (>85% DUAL)`;
+          barDualTxt.style.color = '#34d399';
+        } else {
+          barDualTxt.textContent = `⏳ ACUMULANDO CONFIANZA PARA OPERAR (P1: ${point1ModelConfPct.toFixed(1)}% | P2: ${point2RiskConfPct.toFixed(1)}%)`;
+          barDualTxt.style.color = '#fbbf24';
+        }
+      }
+
+      // Actualizar Barra Tug-of-War Compradores vs Vendedores
+      const tugB = document.getElementById('tugBuyersLabel');
+      const tugS = document.getElementById('tugSellersLabel');
+      const tugBF = document.getElementById('tugBuyersFill');
+      const tugSF = document.getElementById('tugSellersFill');
+      const tugTag = document.getElementById('tugImbalanceTag');
+      if (tugB && tugS && tugBF && tugSF) {
+        tugB.textContent = `▲ Compradores: ${currentBuyersPct.toFixed(1)}%`;
+        tugS.textContent = `▼ Vendedores: ${currentSellersPct.toFixed(1)}%`;
+        tugBF.style.width = `${currentBuyersPct}%`;
+        tugSF.style.width = `${currentSellersPct}%`;
+      }
+      if (tugTag) {
+        const diffBS = currentBuyersPct - currentSellersPct;
+        tugTag.textContent = diffBS > 4
+          ? `Dominio Comprador (+${diffBS.toFixed(1)}%)`
+          : (diffBS < -4 ? `Dominio Vendedor (${diffBS.toFixed(1)}%)` : `Equilibrio (${currentBuyersPct.toFixed(0)}% / ${currentSellersPct.toFixed(0)}%)`);
+        tugTag.style.color = diffBS > 4 ? '#10b981' : (diffBS < -4 ? '#ef4444' : '#38bdf8');
+      }
 
       // Booleano y Confianza
       const boolEl = document.getElementById('kpiBoolean');
@@ -1635,11 +2458,62 @@
       document.getElementById('kpiCentsSub').textContent = `Cuotas Polymarket: Up ${currentUpCents}¢ / Down ${currentDownCents}¢`;
       updateOneTapReturns();
 
+      // Actualizar medidores de Punto 1 (>85%), Punto 2 (>85%) y bloqueo último minuto (<60s)
+      const p1El = document.getElementById('p1ConfPill');
+      const p2El = document.getElementById('p2ConfPill');
+      const d85El = document.getElementById('dual85Pill');
+      const lockBadge = document.getElementById('windowLockBadge');
+      if (p1El) {
+        p1El.textContent = `Punto 1 (Modelo Calibrado): ${point1ModelConfPct.toFixed(1)}% ${point1ModelConfPct > 85 ? '✔' : '(req >85%)'}`;
+        p1El.className = 'conf-pill' + (point1ModelConfPct > 85 ? ' pass' : '');
+      }
+      if (p2El) {
+        p2El.textContent = `Punto 2 (Riesgo & Kelly): ${point2RiskConfPct.toFixed(1)}% ${point2RiskConfPct > 85 ? '✔' : '(req >85%)'}`;
+        p2El.className = 'conf-pill' + (point2RiskConfPct > 85 ? ' pass' : '');
+      }
+      if (d85El) {
+        if (isLastMinuteLocked) {
+          d85El.textContent = `Disparador Dual >85%: BLOQUEADO (<60s)`;
+          d85El.className = 'conf-pill';
+        } else if (dual85Passed) {
+          d85El.textContent = `Disparador Dual >85%: ACTIVO (OPERANDO)`;
+          d85El.className = 'conf-pill pass';
+        } else {
+          d85El.textContent = `Disparador Dual >85%: EN ESPERA`;
+          d85El.className = 'conf-pill';
+        }
+      }
+      if (lockBadge) {
+        if (isLastMinuteLocked) {
+          lockBadge.textContent = `🔒 ÚLTIMO MINUTO (${remainingWindowSec}s): APUESTAS DESHABILITADAS`;
+          lockBadge.className = 'window-status-pill window-locked';
+        } else {
+          lockBadge.textContent = `🟢 APUESTAS HABILITADAS (${remainingWindowSec}s restantes)`;
+          lockBadge.className = 'window-status-pill window-open';
+        }
+      }
+
+      const startBtn = document.getElementById('btnStartBetBig');
+      if (startBtn) {
+        startBtn.disabled = isLastMinuteLocked;
+        startBtn.classList.toggle('bet-disabled', isLastMinuteLocked);
+      }
+      if (btnChooseUp) {
+        btnChooseUp.disabled = isLastMinuteLocked;
+        btnChooseUp.classList.toggle('bet-disabled', isLastMinuteLocked);
+      }
+      if (btnChooseDown) {
+        btnChooseDown.disabled = isLastMinuteLocked;
+        btnChooseDown.classList.toggle('bet-disabled', isLastMinuteLocked);
+      }
+      document.querySelectorAll('.tap-card').forEach(c => {
+        c.classList.toggle('bet-disabled', isLastMinuteLocked);
+      });
+
       // Actualizar UI de Efectivo en Caja y Apuesta Activa
       document.getElementById('liveBankroll').textContent = fmt(virtualBankroll);
       document.getElementById('liveWinLoss').textContent = `${sessionWins}W / ${sessionLosses}L`;
 
-      const startBtn = document.getElementById('btnStartBetBig');
       if (activeVirtualBet) {
         if (startBtn) {
           startBtn.innerHTML = `⏳ APUESTA EN JUEGO (${activeVirtualBet.direction} $${activeVirtualBet.stake_usd.toFixed(2)})`;
@@ -1683,6 +2557,39 @@
       const diffMs = Math.max(0, baseEndMs - atomicNowMs);
       const remSec = Math.floor(diffMs / 1000);
       const remMillis = Math.floor(diffMs % 1000);
+      remainingWindowSec = remSec;
+
+      const currentBucketNow = Math.floor((atomicNowMs + windowOffsetSec * 1000) / 300000);
+      if (currentWindowStartBucket !== 0 && currentBucketNow !== currentWindowStartBucket) {
+        currentWindowStartBucket = currentBucketNow;
+        autoOperatedWindowBucket = 0;
+        isLastMinuteLocked = false;
+        if (activeVirtualBet) {
+          settleVirtualBet(false);
+        }
+        officialPolyPriceToBeat = null;
+        if (!manualPriceToBeat) {
+          priceToBeat = liveSpotPrice || priceToBeat;
+        }
+        const noticeEl = document.getElementById('betHelperNotice');
+        if (noticeEl) {
+          noticeEl.innerHTML = '🔓 <strong>Nuevo periodo de 5 minutos iniciado:</strong> Apuestas rehabilitadas automáticamente. Esperando señal dual &gt;85% (Punto 1 + Punto 2).';
+        }
+        syncPolymarket5mContract();
+      }
+
+      const nextLockState = remSec < 60;
+      if (nextLockState !== isLastMinuteLocked) {
+        isLastMinuteLocked = nextLockState;
+        const noticeEl = document.getElementById('betHelperNotice');
+        if (noticeEl) {
+          noticeEl.innerHTML = isLastMinuteLocked
+            ? '🔒 <strong>Último minuto (&lt;60s) de la ventana 5m:</strong> Las apuestas han sido deshabilitadas temporalmente y se reiniciarán en cuanto empiece el siguiente periodo.'
+            : '🔓 <strong>Apuestas rehabilitadas:</strong> Nuevo periodo 5m activo (esperando Punto 1 &gt;85% y Punto 2 &gt;85%).';
+        }
+        updateFastDOM(isLastMinuteLocked ? 'LOCK-60S' : 'UNLOCK-5M');
+      }
+
       const mins = String(Math.floor(remSec / 60)).padStart(2, '0');
       const secs = String(remSec % 60).padStart(2, '0');
       const msStr = String(remMillis).padStart(3, '0');
@@ -1709,6 +2616,14 @@
     // 5. Ejecución y Liquidación de Apuestas con Contabilidad Real del Libro de Órdenes (CLOB)
     function openVirtualBet(stakeMode) {
       if (!liveSpotPrice || liveSpotPrice <= 0) return;
+
+      if (isLastMinuteLocked || remainingWindowSec < 60) {
+        const notice = document.getElementById('betHelperNotice');
+        if (notice) {
+          notice.innerHTML = `<span style="color:#fca5a5;font-weight:700;">🔒 Último minuto (${remainingWindowSec}s restantes): las apuestas están deshabilitadas hasta que inicie el siguiente periodo de 5m.</span>`;
+        }
+        return;
+      }
 
       // Si ya hay una apuesta abierta y el usuario presiona el botón principal "INICIAR APUESTA AHORA",
       // NO liquidar como ganancia falsa: avisar que la apuesta ya está en curso esperando el cierre 5m.
@@ -1855,7 +2770,7 @@
       updateFastDOM('SETTLED');
       renderTradesAndEquity();
 
-      if (!isEarlyCashout && document.getElementById('autoBetCheck').checked) {
+      if (!isEarlyCashout && !isLastMinuteLocked && document.getElementById('autoBetCheck').checked) {
         setTimeout(() => openVirtualBet('kelly'), 400);
       }
     }
@@ -1887,109 +2802,510 @@
 
     function spawnFloatingBubble(amount, isUp) {
       const feed = document.getElementById('floatingBetsFeed');
+      if (!feed) return;
       const div = document.createElement('div');
       div.className = 'feed-bubble';
-      div.style.color = isUp ? '#10b981' : '#ef4444';
-      div.textContent = `+$${amount}`;
+      const clr = isUp ? '#16a34a' : '#ef4444';
+      div.style.color = clr;
+      div.innerHTML = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${clr};"></span><span>+$${amount}</span>`;
       feed.appendChild(div);
-      setTimeout(() => { if (div.parentNode) div.parentNode.removeChild(div); }, 2100);
+      while (feed.children.length > 5) {
+        feed.removeChild(feed.firstChild);
+      }
     }
 
     setInterval(() => {
-      const amts = [5, 10, 12, 23, 25];
-      spawnFloatingBubble(amts[Math.floor(Math.random() * amts.length)], layaTrend === 'UP');
-    }, 2000);
+      const amts = [1, 2, 3, 4, 8, 12, 23];
+      const upDir = Math.random() < (currentBuyersPct / 100.0);
+      spawnFloatingBubble(amts[Math.floor(Math.random() * amts.length)], upDir);
+    }, 850);
 
-    // 6. Renderizado de Gráfica Principal Superpuesta + Diferencia (Sin Animación Pesada = 0 Delay)
-    function renderRealtimeCharts() {
-      if (tickLabels.length < 2) return;
+    // 6. Renderizado de Gráfica Fluida 60 FPS Exacta Polymarket + Trazo Superpuesto Laya + Compradores vs Vendedores
+    const overlayCanvasEl = document.getElementById('overlayChart');
+    if (overlayCanvasEl) {
+      overlayCanvasEl.addEventListener('mousemove', (ev) => {
+        const rect = overlayCanvasEl.getBoundingClientRect();
+        hoverCanvasX = ev.clientX - rect.left;
+        hoverCanvasY = ev.clientY - rect.top;
+      });
+      overlayCanvasEl.addEventListener('mouseleave', () => {
+        hoverCanvasX = null;
+        hoverCanvasY = null;
+      });
+    }
 
-      // Añadir 3 puntos de proyección futura (+5s, +10s, +15s) para que se vea hacia dónde proyecta Laya
-      const extLabels = [...tickLabels, '+5s', '+10s', '+15s'];
-      const extReal = [...tickRealPrices, null, null, null];
-      const stepDelta = (layaPredictedPrice - liveSpotPrice) / 3.0;
-      const extLaya = [
-        ...tickLayaPrices,
-        +(liveSpotPrice + stepDelta).toFixed(2),
-        +(liveSpotPrice + stepDelta * 2).toFixed(2),
-        layaPredictedPrice
-      ];
-      const extBeat = extLabels.map(() => priceToBeat);
+    const polymarketExactCanvasPlugin = {
+      id: 'polymarketExactCanvasPlugin',
+      afterDatasetsDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea || !scales || !scales.y || !scales.x) return;
+        const yScale = scales.y;
+        const xScale = scales.x;
+        const { left, right, top, bottom } = chartArea;
+        const nowPulse = (Math.sin(performance.now() * 0.008) + 1) * 0.5;
 
-      const ctx1 = document.getElementById('overlayChart').getContext('2d');
+        function drawPointerBadge(yPx, bgColor, textColor, labelText, dashedColor, drawLine = true) {
+          if (drawLine) {
+            ctx.save();
+            ctx.strokeStyle = dashedColor;
+            ctx.lineWidth = 1.25;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(left, yPx);
+            ctx.lineTo(right, yPx);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          if (labelText) {
+            ctx.save();
+            ctx.font = 'bold 10.5px Inter, sans-serif';
+            const padX = 8;
+            const txtW = ctx.measureText(labelText).width;
+            const boxW = txtW + padX * 2;
+            const boxH = 20;
+            const tipW = 7;
+            const xStart = right - 2;
+            const xEnd = right + boxW + tipW - 2;
+
+            ctx.fillStyle = bgColor;
+            ctx.beginPath();
+            ctx.moveTo(xStart, yPx);
+            ctx.lineTo(xStart + tipW, yPx - boxH / 2);
+            ctx.lineTo(xEnd - 4, yPx - boxH / 2);
+            ctx.quadraticCurveTo(xEnd, yPx - boxH / 2, xEnd, yPx - boxH / 2 + 4);
+            ctx.lineTo(xEnd, yPx + boxH / 2 - 4);
+            ctx.quadraticCurveTo(xEnd, yPx + boxH / 2, xEnd - 4, yPx + boxH / 2);
+            ctx.lineTo(xStart + tipW, yPx + boxH / 2);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = textColor;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(labelText, xStart + tipW + (boxW - 2) / 2, yPx + 0.5);
+            ctx.restore();
+          }
+        }
+
+        // 1. Línea naranja punteada en Current Price + Halo pulsante en la punta
+        const curYVal = displaySpotPrice || liveSpotPrice;
+        if (curYVal > 0) {
+          const curYPx = Math.max(top + 8, Math.min(bottom - 8, yScale.getPixelForValue(curYVal)));
+          drawPointerBadge(curYPx, '#f59e0b', '#ffffff', null, 'rgba(245, 158, 11, 0.50)', true);
+
+          const ds0 = chart.data.datasets[0]?.data || [];
+          if (ds0.length > 0) {
+            const tipPt = ds0[ds0.length - 1];
+            const tipX = xScale.getPixelForValue(tipPt.x);
+            const tipY = yScale.getPixelForValue(tipPt.y);
+            ctx.save();
+            ctx.fillStyle = `rgba(245, 158, 11, ${0.18 + 0.22 * nowPulse})`;
+            ctx.beginPath();
+            ctx.arc(tipX, tipY, 7.5 + 3.5 * nowPulse, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#f59e0b';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.arc(tipX, tipY, 4.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        // 2. Smart Target (Price To Beat): Target ↑ si está arriba del rango, Target ↓ si está abajo, o < Target exacto
+        if (priceToBeat > 0) {
+          const yMinVis = yScale.min;
+          const yMaxVis = yScale.max;
+          if (priceToBeat > yMaxVis) {
+            drawPointerBadge(top + 12, '#64748b', '#ffffff', 'Target ↑', 'rgba(148, 163, 184, 0.55)', true);
+          } else if (priceToBeat < yMinVis) {
+            drawPointerBadge(bottom - 12, '#64748b', '#ffffff', 'Target ↓', 'rgba(148, 163, 184, 0.55)', true);
+          } else {
+            const beatPx = Math.max(top + 12, Math.min(bottom - 12, yScale.getPixelForValue(priceToBeat)));
+            drawPointerBadge(beatPx, '#94a3b8', '#ffffff', 'Target', 'rgba(148, 163, 184, 0.72)', true);
+          }
+        }
+
+        // 3. Trazo superpuesto de Laya (+4.5s) + punto púrpura + badge "Laya"
+        const layaYVal = displayLayaPrice || layaPredictedPrice;
+        if (layaYVal > 0) {
+          const layaPx = Math.max(top + 12, Math.min(bottom - 12, yScale.getPixelForValue(layaYVal)));
+          drawPointerBadge(layaPx, '#9333ea', '#ffffff', 'Laya', 'rgba(168, 85, 247, 0.25)', false);
+        }
+
+        // 4. Tooltip interactivo al pasar el cursor (idéntico al video Polymarket)
+        if (hoverCanvasX !== null && hoverCanvasX >= left && hoverCanvasX <= right) {
+          const dsReal = chart.data.datasets[0]?.data || [];
+          const dsLaya = chart.data.datasets[1]?.data || [];
+          const hoverTs = xScale.getValueForPixel(hoverCanvasX);
+          let closestReal = null;
+          let minDist = Infinity;
+          for (let i = 0; i < dsReal.length; i++) {
+            const d = Math.abs(dsReal[i].x - hoverTs);
+            if (d < minDist) {
+              minDist = d;
+              closestReal = dsReal[i];
+            }
+          }
+          let closestLaya = null;
+          let minLDist = Infinity;
+          for (let i = 0; i < dsLaya.length; i++) {
+            const d = Math.abs(dsLaya[i].x - hoverTs);
+            if (d < minLDist) {
+              minLDist = d;
+              closestLaya = dsLaya[i];
+            }
+          }
+          if (closestReal) {
+            const cx = xScale.getPixelForValue(closestReal.x);
+            const cyReal = yScale.getPixelForValue(closestReal.y);
+            const cyLaya = closestLaya ? yScale.getPixelForValue(closestLaya.y) : cyReal;
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.55)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(cx, top);
+            ctx.lineTo(cx, bottom);
+            ctx.stroke();
+
+            ctx.fillStyle = '#f59e0b';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(cx, cyReal, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            if (closestLaya) {
+              ctx.fillStyle = '#a855f7';
+              ctx.beginPath();
+              ctx.arc(cx, cyLaya, 4.5, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.stroke();
+            }
+
+            const priceStr = `$${Number(closestReal.y).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            const layaStr = closestLaya ? `Laya: $${Number(closestLaya.y).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '';
+            const dtStr = new Date(closestReal.x).toLocaleString('en-US', {
+              month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit'
+            });
+
+            const boxW = 166;
+            const boxH = closestLaya ? 54 : 38;
+            const bx = Math.min(right - boxW - 6, Math.max(left + 6, cx - boxW / 2));
+            const by = Math.max(top + 6, cyReal - boxH - 14);
+
+            ctx.fillStyle = polyThemeMode === 'light' ? 'rgba(255, 255, 255, 0.96)' : 'rgba(15, 23, 42, 0.96)';
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(bx, by, boxW, boxH, 8);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.arc(bx + 12, by + 13, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = polyThemeMode === 'light' ? '#0f172a' : '#f8fafc';
+            ctx.font = 'bold 11.5px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(priceStr, bx + 21, by + 13);
+
+            if (closestLaya) {
+              ctx.fillStyle = '#a855f7';
+              ctx.beginPath();
+              ctx.arc(bx + 12, by + 28, 3.5, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = '#a855f7';
+              ctx.font = 'bold 10.5px Inter, sans-serif';
+              ctx.fillText(layaStr, bx + 21, by + 28);
+            }
+
+            ctx.fillStyle = '#64748b';
+            ctx.font = '600 9.5px Inter, sans-serif';
+            ctx.fillText(dtStr, bx + 10, by + (closestLaya ? 43 : 28));
+            ctx.restore();
+          }
+        }
+      }
+    };
+
+    function renderFluidOverlay60FPS() {
+      const overlayEl = document.getElementById('overlayChart');
+      if (!overlayEl || fluidPoints.length < 2 || liveSpotPrice <= 0) {
+        requestAnimationFrame(renderFluidOverlay60FPS);
+        return;
+      }
+
+      const nowMs = getAtomicNowMs();
+      if (!stage1Spot) stage1Spot = liveSpotPrice;
+      if (!displaySpotPrice) displaySpotPrice = liveSpotPrice;
+      if (!stage1Laya) stage1Laya = layaPredictedPrice || liveSpotPrice;
+      if (!displayLayaPrice) displayLayaPrice = layaPredictedPrice || liveSpotPrice;
+
+      // Filtro paso bajo de 2 etapas + micro-ondulación continua estilo Polymarket a 60 FPS
+      const microWave = Math.sin(nowMs * 0.0082) * 0.20 + Math.cos(nowMs * 0.0051) * 0.11;
+      stage1Spot += (liveSpotPrice - stage1Spot) * 0.18;
+      displaySpotPrice += (stage1Spot + microWave - displaySpotPrice) * 0.16;
+
+      const targetLaya = layaPredictedPrice || liveSpotPrice;
+      stage1Laya += (targetLaya - stage1Laya) * 0.15;
+      displayLayaPrice += (stage1Laya + microWave * 0.55 - displayLayaPrice) * 0.14;
+
+      if (nowMs - lastFluidPushMs >= 75) {
+        lastFluidPushMs = nowMs;
+        fluidPoints.push({
+          ts: nowMs,
+          real: +displaySpotPrice.toFixed(2),
+          laya: +displayLayaPrice.toFixed(2)
+        });
+        const cutoff = nowMs - FLUID_WINDOW_MS - 8000;
+        while (fluidPoints.length > 10 && fluidPoints[0].ts < cutoff) {
+          fluidPoints.shift();
+        }
+      }
+
+      const xMin = nowMs - FLUID_WINDOW_MS;
+      const xMax = nowMs + FLUID_LEAD_MS;
+
+      const realData = fluidPoints.map(p => ({ x: p.ts, y: p.real }));
+      realData.push({ x: nowMs, y: +displaySpotPrice.toFixed(2) });
+
+      const stepDelta = (displayLayaPrice - displaySpotPrice) / 3.0;
+      const layaData = fluidPoints.map(p => ({ x: p.ts, y: p.laya }));
+      layaData.push({ x: nowMs, y: +displayLayaPrice.toFixed(2) });
+      layaData.push({ x: nowMs + 1000, y: +(displaySpotPrice + stepDelta).toFixed(2) });
+      layaData.push({ x: nowMs + 2000, y: +(displaySpotPrice + stepDelta * 2).toFixed(2) });
+      layaData.push({ x: nowMs + 3000, y: +displayLayaPrice.toFixed(2) });
+
+      // Calcular auto-escala limpia tipo Polymarket ($10 por paso de grilla)
+      let rMin = Infinity;
+      let rMax = -Infinity;
+      for (let i = 0; i < realData.length; i++) {
+        if (realData[i].x >= xMin) {
+          if (realData[i].y < rMin) rMin = realData[i].y;
+          if (realData[i].y > rMax) rMax = realData[i].y;
+        }
+      }
+      if (!isFinite(rMin) || !isFinite(rMax)) {
+        rMin = displaySpotPrice - 12;
+        rMax = displaySpotPrice + 12;
+      }
+      let vMin = rMin;
+      let vMax = rMax;
+      for (let i = 0; i < layaData.length; i++) {
+        if (layaData[i].x >= xMin) {
+          const ly = Math.max(rMin - 9.0, Math.min(rMax + 9.0, layaData[i].y));
+          if (ly < vMin) vMin = ly;
+          if (ly > vMax) vMax = ly;
+        }
+      }
+      if (priceToBeat > 0 && Math.abs(priceToBeat - displaySpotPrice) <= 22.0) {
+        if (priceToBeat < vMin) vMin = priceToBeat;
+        if (priceToBeat > vMax) vMax = priceToBeat;
+      }
+
+      const rawSpan = Math.max(28.0, Math.min(65.0, vMax - vMin));
+      const pad = Math.max(7.0, rawSpan * 0.28);
+      const targetYMin = vMin - pad;
+      const targetYMax = vMax + pad;
+      if (!smoothYMin || !smoothYMax) {
+        smoothYMin = targetYMin;
+        smoothYMax = targetYMax;
+      } else {
+        smoothYMin += (targetYMin - smoothYMin) * 0.12;
+        smoothYMax += (targetYMax - smoothYMax) * 0.12;
+      }
+      const yStep = (smoothYMax - smoothYMin) <= 80 ? 10 : 20;
+
+      const isLight = polyThemeMode === 'light';
+      const gridColor = isLight ? 'rgba(148, 163, 184, 0.22)' : 'rgba(255, 255, 255, 0.06)';
+      const tickColor = isLight ? '#64748b' : '#94a3b8';
+      const ctx1 = overlayEl.getContext('2d');
+
       if (!overlayChartInstance) {
-        const grad = ctx1.createLinearGradient(0, 0, 0, 320);
-        grad.addColorStop(0, 'rgba(247, 147, 26, 0.22)');
-        grad.addColorStop(1, 'rgba(247, 147, 26, 0.0)');
+        const grad = ctx1.createLinearGradient(0, 0, 0, 340);
+        grad.addColorStop(0, isLight ? 'rgba(245, 158, 11, 0.14)' : 'rgba(247, 147, 26, 0.22)');
+        grad.addColorStop(1, 'rgba(245, 158, 11, 0.0)');
 
         overlayChartInstance = new Chart(ctx1, {
           type: 'line',
           data: {
-            labels: extLabels,
             datasets: [
               {
                 label: 'Polymarket BTC Live ($)',
-                data: extReal,
-                borderColor: '#f7931a',
+                data: realData,
+                borderColor: '#f59e0b',
                 backgroundColor: grad,
                 fill: true,
-                borderWidth: 2.8,
-                tension: 0.28,
-                pointRadius: (c) => c.dataIndex === tickRealPrices.length - 1 ? 5.5 : 0,
-                pointBackgroundColor: '#f7931a',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2
+                borderWidth: 2.5,
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4,
+                pointRadius: 0
               },
               {
-                label: 'Predicción Modelo Laya ($)',
-                data: extLaya,
+                label: 'Trazo Modelo Laya ($)',
+                data: layaData,
                 borderColor: '#a855f7',
                 backgroundColor: 'transparent',
-                borderWidth: 2.4,
+                borderWidth: 2.0,
                 borderDash: [5, 4],
-                tension: 0.28,
-                pointRadius: (c) => c.dataIndex === extLaya.length - 1 ? 5.5 : 0,
-                pointBackgroundColor: '#a855f7'
-              },
-              {
-                label: 'Price To Beat ($)',
-                data: extBeat,
-                borderColor: 'rgba(148, 163, 184, 0.45)',
-                borderWidth: 1.4,
-                borderDash: [4, 4],
-                pointRadius: 0,
-                fill: false
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4,
+                pointRadius: (c) => c.dataIndex === layaData.length - 1 ? 4.5 : 0,
+                pointBackgroundColor: '#a855f7',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 1.5
               }
             ]
           },
+          plugins: [polymarketExactCanvasPlugin],
           options: {
             animation: false,
+            parsing: false,
             responsive: true,
             maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { display: false } },
+            layout: { padding: { right: 64, top: 10, bottom: 6 } },
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
             scales: {
               x: {
-                grid: { color: 'rgba(255,255,255,0.03)' },
-                ticks: { color: '#94a3b8', maxTicksLimit: 8 }
+                type: 'linear',
+                min: xMin,
+                max: xMax,
+                grid: { display: false },
+                border: { display: false },
+                afterBuildTicks(axis) {
+                  const ticks = [];
+                  const step = 4000;
+                  const first = Math.ceil((axis.min + 3600) / step) * step;
+                  for (let t = first; t <= axis.max - 1500; t += step) {
+                    ticks.push({ value: t });
+                  }
+                  axis.ticks = ticks;
+                },
+                ticks: {
+                  color: tickColor,
+                  font: { size: 11, weight: '600' },
+                  callback: (val) => new Date(val).toLocaleTimeString('en-US', {
+                    hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit'
+                  })
+                }
               },
               y: {
                 position: 'right',
-                grid: { color: 'rgba(255,255,255,0.06)' },
+                min: smoothYMin,
+                max: smoothYMax,
+                grid: { color: gridColor },
+                border: { display: false },
                 ticks: {
-                  color: '#94a3b8',
-                  callback: v => `$${Number(v).toLocaleString('en-US', { minimumFractionDigits: 0 })}`
+                  color: tickColor,
+                  stepSize: yStep,
+                  maxTicksLimit: 6,
+                  font: { size: 11, weight: '600' },
+                  callback: v => `$${Number(v).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
                 }
               }
             }
           }
         });
       } else {
-        overlayChartInstance.data.labels = extLabels;
-        overlayChartInstance.data.datasets[0].data = extReal;
-        overlayChartInstance.data.datasets[1].data = extLaya;
-        overlayChartInstance.data.datasets[2].data = extBeat;
+        overlayChartInstance.options.scales.x.min = xMin;
+        overlayChartInstance.options.scales.x.max = xMax;
+        overlayChartInstance.options.scales.y.min = smoothYMin;
+        overlayChartInstance.options.scales.y.max = smoothYMax;
+        overlayChartInstance.options.scales.y.ticks.stepSize = yStep;
+        overlayChartInstance.data.datasets[0].data = realData;
+        overlayChartInstance.data.datasets[1].data = layaData;
         overlayChartInstance.update('none');
+      }
+
+      // Actualizar precio mostrado en cabecera suavemente sincronizado al frame 60 FPS
+      const chartCurEl = document.getElementById('chartCurrentPrice');
+      if (chartCurEl) {
+        chartCurEl.textContent = `$${Number(displaySpotPrice).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+
+      requestAnimationFrame(renderFluidOverlay60FPS);
+    }
+    requestAnimationFrame(renderFluidOverlay60FPS);
+
+    function renderRealtimeCharts() {
+      if (tickLabels.length < 2) return;
+
+      // Gráfica Compradores vs Vendedores (%)
+      const bsCanvas = document.getElementById('buyersSellersChart');
+      if (bsCanvas && tickBuyersPct.length >= 2) {
+        const ctxBS = bsCanvas.getContext('2d');
+        const eq50 = tickLabels.map(() => 50);
+        if (!buyersSellersChartInstance) {
+          buyersSellersChartInstance = new Chart(ctxBS, {
+            type: 'line',
+            data: {
+              labels: tickLabels,
+              datasets: [
+                {
+                  label: '% Compradores',
+                  data: tickBuyersPct,
+                  borderColor: '#10b981',
+                  backgroundColor: 'rgba(16, 185, 129, 0.14)',
+                  fill: true,
+                  borderWidth: 2.2,
+                  tension: 0.28,
+                  pointRadius: 0
+                },
+                {
+                  label: '% Vendedores',
+                  data: tickSellersPct,
+                  borderColor: '#ef4444',
+                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                  fill: true,
+                  borderWidth: 2.2,
+                  tension: 0.28,
+                  pointRadius: 0
+                },
+                {
+                  label: 'Equilibrio 50%',
+                  data: eq50,
+                  borderColor: 'rgba(148, 163, 184, 0.45)',
+                  borderDash: [4, 4],
+                  borderWidth: 1.2,
+                  pointRadius: 0,
+                  fill: false
+                }
+              ]
+            },
+            options: {
+              animation: false,
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: true, labels: { color: '#cbd5e1', boxWidth: 12, font: { size: 11 } } }
+              },
+              scales: {
+                x: { display: false },
+                y: {
+                  min: 0,
+                  max: 100,
+                  grid: { color: 'rgba(255,255,255,0.06)' },
+                  ticks: { color: '#94a3b8', stepSize: 25, callback: v => `${v}%` }
+                }
+              }
+            }
+          });
+        } else {
+          buyersSellersChartInstance.data.labels = tickLabels;
+          buyersSellersChartInstance.data.datasets[0].data = tickBuyersPct;
+          buyersSellersChartInstance.data.datasets[1].data = tickSellersPct;
+          buyersSellersChartInstance.data.datasets[2].data = eq50;
+          buyersSellersChartInstance.update('none');
+        }
       }
 
       const ctx2 = document.getElementById('diffChart').getContext('2d');
@@ -2103,8 +3419,24 @@
           layaOptimalThreshold = latestRl.optimal_threshold;
         }
         if (latestRl.calibration_index_pct) {
+          lastSyncCalibPct = Number(latestRl.calibration_index_pct);
           document.getElementById('kpiCalibSub').textContent =
             `Fiabilidad RL (1 − Brier): ${latestRl.calibration_index_pct.toFixed(1)}% (${latestRl.episodes_trained} ep)`;
+        }
+        if (data.summary) {
+          if (data.summary.buyers_pct !== undefined) {
+            lastSyncBuyersPct = Number(data.summary.buyers_pct);
+          }
+          if (data.summary.current_btc_vol_5m_pct !== undefined) {
+            lastSyncVol5mPct = Number(data.summary.current_btc_vol_5m_pct);
+          }
+          if (data.summary.orderbook) {
+            lastSyncClobImbalance = Number(data.summary.orderbook.imbalance || 0);
+            lastSyncSpreadPct = Number((data.summary.orderbook.spread || 0.015) * 100);
+          }
+        }
+        if (latestMa.agents && latestMa.agents.scout) {
+          lastSyncLiquidityScore = Number(latestMa.agents.scout.liquidity_score || 92);
         }
 
         // Poblar tabla inicial con el backtest si aún no hay apuestas cerradas en esta sesión
@@ -2576,6 +3908,7 @@
                 <div class="kv-row"><span>Vela Abierta Descartada:</span><span style="color:#10b981;">SÍ (Solo Vela Cerrada)</span></div>
                 <div class="kv-row"><span>Precio Cierre BTC / CLOB:</span><span>$${Number(fc.btc_close || 0).toLocaleString()} (${(Number(fc.poly_clob_prob || 0.5)*100).toFixed(2)}¢)</span></div>
                 <div class="kv-row"><span>Pronóstico Laya (Prob / BTC):</span><span style="color:#c084fc;">${(Number(fc.model_forecast_prob || 0.5)*100).toFixed(2)}% ($${Number(fc.model_forecast_btc || 0).toLocaleString()})</span></div>
+                <div class="kv-row"><span>Punto 1 (Modelo Calibrado):</span><span style="color:${Number(fc.point1_model_confidence_pct||0)>85?'#10b981':'#f59e0b'};">${Number(fc.point1_model_confidence_pct || 0).toFixed(1)}% (&gt;85%)</span></div>
                 <div class="kv-row"><span>Indicadores (Parkinson / GK):</span><span>${(Number(ind.parkinson_vol_5m || 0)*100).toFixed(3)}% / ${(Number(ind.garman_klass_vol_5m || 0)*100).toFixed(3)}%</span></div>
                 <div class="kv-row"><span>Taker Ratio / Vol Z-Score:</span><span>${(Number(ind.taker_buy_ratio_5m || 0.5)*100).toFixed(1)}% / ${Number(ind.volume_zscore_5m || 0).toFixed(2)}&sigma;</span></div>
               </div>
@@ -2604,6 +3937,8 @@
                   <span style="font-size:0.68rem;color:#38bdf8;">Paso 5 OK</span>
                 </h3>
                 <div class="kv-row"><span>Estado de Riesgo:</span><span style="color:${rsk.approved ? '#10b981' : '#f59e0b'};">${rsk.risk_status || 'OK_ACTIVE'}</span></div>
+                <div class="kv-row"><span>Punto 2 (Riesgo &amp; Kelly) / Dual:</span><span style="color:${Number(fc.point2_risk_confidence_pct||0)>85?'#10b981':'#f59e0b'};">${Number(fc.point2_risk_confidence_pct || 0).toFixed(1)}% (${fc.dual_85_passed ? 'DUAL >85% ✔' : 'ESPERANDO >85%'})</span></div>
+                <div class="kv-row"><span>Ventana 5m (Bloqueo &lt;60s):</span><span style="color:${(data.window_timing && data.window_timing.last_minute_locked)?'#ef4444':'#10b981'};">${(data.window_timing && data.window_timing.remaining_sec !== undefined) ? data.window_timing.remaining_sec + 's (' + (data.window_timing.last_minute_locked ? 'BLOQUEADO <60s' : 'HABILITADO') + ')' : 'HABILITADO'}</span></div>
                 <div class="kv-row"><span>Exposición Actual / Límite:</span><span>${Number(st.exposure_pct || 0).toFixed(2)}% / máx ${rCfg.max_exposure_pct || 20}% ($10,000)</span></div>
                 <div class="kv-row"><span>Pérdida Diaria / Límite:</span><span>$${Number(st.daily_pnl_usdc || 0).toLocaleString()} / -$${Number(rCfg.max_daily_loss_usdc || 2500).toLocaleString()}</span></div>
                 <div class="kv-row"><span>Apalancamiento / Cortos:</span><span style="color:#10b981;">1.0x (Prohibidos)</span></div>

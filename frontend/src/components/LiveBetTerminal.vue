@@ -5,12 +5,38 @@
         <h2>
           🎰 Simulador de Apuestas en Tiempo Real (Dinero Ficticio &bull; Polymarket &amp; MEXC 5m)
           <span class="latency-pill">{{ latencyText }}</span>
+          <span class="window-status-pill" :class="lastMinuteLocked ? 'window-locked' : 'window-open'">
+            {{
+              lastMinuteLocked
+                ? `🔒 ÚLTIMO MINUTO (${remainingWindowSec}s): APUESTAS DESHABILITADAS`
+                : `🟢 APUESTAS HABILITADAS (${remainingWindowSec}s restantes)`
+            }}
+          </span>
         </h2>
-        <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px" v-html="helperNotice"></p>
+        <div class="dual-conf-bar">
+          <span class="conf-pill" :class="{ pass: point1ModelConfPct > 85 }">
+            Punto 1 (Modelo Calibrado): {{ point1ModelConfPct.toFixed(1) }}% {{ point1ModelConfPct > 85 ? '✔' : '(req >85%)' }}
+          </span>
+          <span class="conf-pill" :class="{ pass: point2RiskConfPct > 85 }">
+            Punto 2 (Riesgo &amp; Kelly): {{ point2RiskConfPct.toFixed(1) }}% {{ point2RiskConfPct > 85 ? '✔' : '(req >85%)' }}
+          </span>
+          <span class="conf-pill" :class="{ pass: !lastMinuteLocked && dual85Passed }">
+            {{
+              lastMinuteLocked
+                ? 'Disparador Dual >85%: BLOQUEADO (<60s)'
+                : dual85Passed
+                  ? 'Disparador Dual >85%: ACTIVO (OPERANDO)'
+                  : 'Disparador Dual >85%: EN ESPERA'
+            }}
+          </span>
+        </div>
+        <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px" v-html="helperNotice"></p>
       </div>
       <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
         <button
           class="btn-start-bet"
+          :class="{ 'bet-disabled': lastMinuteLocked }"
+          :disabled="lastMinuteLocked"
           :style="{
             background: activeBet
               ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
@@ -49,7 +75,8 @@
           <div class="up-down-buttons">
             <button
               class="btn-outcome"
-              :class="{ 'active-up': selectedDirection === 'UP' }"
+              :class="{ 'active-up': selectedDirection === 'UP', 'bet-disabled': lastMinuteLocked }"
+              :disabled="lastMinuteLocked"
               @click="emit('select-direction', 'UP')"
             >
               <span v-if="layaTrend === 'UP'" class="laya-rec-tag">★ LAYA</span>
@@ -57,7 +84,8 @@
             </button>
             <button
               class="btn-outcome"
-              :class="{ 'active-down': selectedDirection === 'DOWN' }"
+              :class="{ 'active-down': selectedDirection === 'DOWN', 'bet-disabled': lastMinuteLocked }"
+              :disabled="lastMinuteLocked"
               @click="emit('select-direction', 'DOWN')"
             >
               <span v-if="layaTrend === 'DOWN'" class="laya-rec-tag">★ LAYA</span>
@@ -71,19 +99,19 @@
             One-Tap Buy con Dinero Ficticio (Descuenta de Caja Real)
           </div>
           <div class="one-tap-grid">
-            <div class="tap-card" @click="emit('open-bet', '5')">
+            <div class="tap-card" :class="{ 'bet-disabled': lastMinuteLocked }" @click="emit('open-bet', '5')">
               <div class="tap-amount">$5</div>
               <div class="tap-win">win <strong>${{ (5 / askProb).toFixed(2) }}</strong></div>
             </div>
-            <div class="tap-card" @click="emit('open-bet', '25')">
+            <div class="tap-card" :class="{ 'bet-disabled': lastMinuteLocked }" @click="emit('open-bet', '25')">
               <div class="tap-amount">$25</div>
               <div class="tap-win">win <strong>${{ (25 / askProb).toFixed(2) }}</strong></div>
             </div>
-            <div class="tap-card" @click="emit('open-bet', '100')">
+            <div class="tap-card" :class="{ 'bet-disabled': lastMinuteLocked }" @click="emit('open-bet', '100')">
               <div class="tap-amount">$100</div>
               <div class="tap-win">win <strong>${{ (100 / askProb).toFixed(2) }}</strong></div>
             </div>
-            <div class="tap-card" style="border-color: var(--laya-purple)" @click="emit('open-bet', 'kelly')">
+            <div class="tap-card" :class="{ 'bet-disabled': lastMinuteLocked }" style="border-color: var(--laya-purple)" @click="emit('open-bet', 'kelly')">
               <div class="tap-amount" style="color: var(--laya-purple)">Kelly</div>
               <div class="tap-win">Auto <strong>Laya</strong></div>
             </div>
@@ -180,6 +208,11 @@ const props = defineProps<{
   priceToBeat: number;
   sessionWins: number;
   sessionLosses: number;
+  point1ModelConfPct: number;
+  point2RiskConfPct: number;
+  dual85Passed: boolean;
+  lastMinuteLocked: boolean;
+  remainingWindowSec: number;
 }>();
 
 const emit = defineEmits<{

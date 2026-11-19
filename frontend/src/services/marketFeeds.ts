@@ -101,9 +101,13 @@ export class RealtimeMarketFeedManager {
                 if (this.lastBinanceBookMid > 1000) {
                   this.chainlinkBasisOffset = this.lastChainlinkSpot - this.lastBinanceBookMid;
                 }
-              }
-              if (this.currentOracle === 'polymarket_rtds') {
-                this.onTick(val, 'POLY-RTDS');
+                if (this.currentOracle === 'polymarket_rtds') {
+                  this.onTick(val, 'POLY-RTDS');
+                }
+              } else if (msg.topic === 'crypto_prices') {
+                if (this.currentOracle === 'polymarket_rtds' && this.lastBinanceBookMid === 0) {
+                  this.onTick(val + this.chainlinkBasisOffset, 'POLY-USDT');
+                }
               }
             }
           }

@@ -8,6 +8,7 @@ import type {
 
 export const PolymarketAgentDashboard: React.FC = () => {
   const [agentState, setAgentState] = useState<AgentPortfolioState | null>(null);
+  const [windowTiming, setWindowTiming] = useState<any>(null);
   const [latestCycle, setLatestCycle] = useState<any>(null);
   const [llmConfig, setLlmConfig] = useState<any>(null);
   const [riskConfig, setRiskConfig] = useState<any>(null);
@@ -24,6 +25,7 @@ export const PolymarketAgentDashboard: React.FC = () => {
     if (!res.ok) return;
     const data = await res.json();
     setAgentState(data.agent_state);
+    setWindowTiming(data.window_timing || null);
     setLatestCycle(data.latest_cycle);
     setLlmConfig(data.llm_config);
     setRiskConfig(data.risk_config);
@@ -99,7 +101,15 @@ export const PolymarketAgentDashboard: React.FC = () => {
 
       <div className="cycle-details">
         <p>Fecha Vela Cerrada: {latestCycle?.candle_iso} (Edad: {latestCycle?.data_age_sec}s)</p>
-        <p>Pronóstico Laya: {((latestCycle?.forecast?.model_forecast_prob || 0) * 100).toFixed(2)}%</p>
+        <p>
+          Pronóstico Laya: {((latestCycle?.forecast?.model_forecast_prob || 0) * 100).toFixed(2)}% |
+          Punto 1 (Modelo Calibrado): {(latestCycle?.forecast?.point1_model_confidence_pct || 0).toFixed(1)}% (&gt;85%) |
+          Punto 2 (Riesgo &amp; Kelly): {(latestCycle?.forecast?.point2_risk_confidence_pct || 0).toFixed(1)}% (&gt;85%)
+        </p>
+        <p>
+          Ventana 5m: {windowTiming?.remaining_sec ?? '--'}s restantes —{' '}
+          {windowTiming?.last_minute_locked ? '🔒 ÚLTIMO MINUTO (<60s): APUESTAS DESHABILITADAS' : '🟢 APUESTAS HABILITADAS'}
+        </p>
         <p>Acción Propuesta Ollama ({llmConfig?.model_name}): {latestCycle?.llm?.proposal?.action}</p>
         <p>Motivo Breve: {latestCycle?.llm?.proposal?.justification}</p>
         <p>Estado de Riesgo: {latestCycle?.risk?.risk_status} — {latestCycle?.risk?.reason}</p>
